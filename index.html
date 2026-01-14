@@ -6,21 +6,18 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Mangala Online v14.4 - Işık Efekti Geri Geldi</title>
+    <title>Mangala Online v14.5 - Rakip Koruma Sistemi</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
     <style>
         :root { --board-color: #8d6e63; --pit-color: #4e342e; --stone-color: #f5f5f5; --active-color: #ffd54f; }
         body { display: flex; flex-direction: column; align-items: center; background-color: #2c3e50; font-family: 'Segoe UI', sans-serif; color: white; margin: 0; padding: 5px; overflow: hidden; touch-action: none; }
-        
-        /* VS EKRANI */
         #vs-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #0052d4, #4364f7, #6fb1fc); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 25000; animation: fadeIn 0.8s; }
         .vs-player { font-size: 3.5rem; color: #ffd54f; font-weight: 900; text-transform: uppercase; text-shadow: 4px 4px 0px #4e342e; margin: 10px; text-align: center; width: 90%; font-family: 'Arial Black', sans-serif; }
         #vs-custom-img { width: auto; height: 35vh; max-width: 80vw; object-fit: contain; margin: 20px 0; animation: bounceVs 1s infinite alternate; }
         @keyframes bounceVs { from { transform: scale(1); } to { transform: scale(1.1); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
         .game-active, .game-active * { cursor: none !important; }
         #hand { position: fixed; width: 60px; height: 60px; background-image: url('https://raw.githubusercontent.com/Leanemealone/assets-images/refs/heads/main/handdd.png'); background-size: contain; background-repeat: no-repeat; z-index: 10001; pointer-events: none; display: none; transform: translate(-10px, -10px); }
         #auth-overlay, #lobby-selection, #waiting-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10000; }
@@ -28,19 +25,10 @@
         select, input { width: 100%; height: 42px; padding: 0 10px; margin: 8px 0; border-radius: 10px; border: none; font-size: 1rem; box-sizing: border-box; }
         #game-ui { display: none; flex-direction: column; align-items: center; width: 100%; height: 100vh; justify-content: center; }
         #stats-bar { display: flex; justify-content: space-around; width: 92%; background: #34495e; padding: 6px; border-radius: 20px; margin-bottom: 8px; font-size: 0.75rem; border: 1px solid #444; }
-
-        /* TABLA VE SARI IŞIK (ACTIVE-PIT) */
         #board { display: grid; grid-template-columns: repeat(8, 9.5vw); gap: 1.2vw; background: var(--board-color); padding: 20px 10px; border-radius: 15px; box-shadow: 0 15px 30px rgba(0,0,0,0.7); border: 6px solid #5d4037; position: relative; max-width: 98vw; }
         .pit { width: 9.5vw; height: 9.5vw; background: var(--pit-color); border-radius: 50%; display: flex; flex-wrap: wrap; justify-content: center; align-content: center; position: relative; box-shadow: inset 4px 4px 10px rgba(0,0,0,0.6); transition: 0.3s; }
         .treasury { grid-row: span 2; height: 21vw; border-radius: 30px; }
-        
-        /* ÖZLEDİĞİN SARI PARLAMA EFEKTİ */
-        .active-pit { 
-            box-shadow: inset 2px 2px 8px rgba(0,0,0,0.5), 0 0 20px var(--active-color); 
-            border: 2px solid var(--active-color);
-            transform: scale(1.03);
-        }
-
+        .active-pit { box-shadow: inset 2px 2px 8px rgba(0,0,0,0.5), 0 0 20px var(--active-color); border: 2px solid var(--active-color); transform: scale(1.03); }
         .stone { width: 1.5vw; height: 1.5vw; background: radial-gradient(circle at 2px 2px, #eee, #999); border-radius: 50%; margin: 1px; }
         .stone-count { position: absolute; font-size: 0.9rem; color: #ffd54f; font-weight: bold; width: 100%; text-align: center; left: 0; pointer-events: none; }
         .count-top { top: -22px; } .count-bottom { bottom: -22px; } .count-treasury { bottom: -18px; }
@@ -52,7 +40,6 @@
 <body>
     <div id="hand"></div>
     <div id="vs-screen"><div id="p1-vs" class="vs-player"></div><img id="vs-custom-img" src="https://raw.githubusercontent.com/Leanemealone/mangala/refs/heads/main/vs.png" alt="VS"><div id="p2-vs" class="vs-player"></div></div>
-
     <div id="auth-overlay"><div class="auth-card"><h2>Mangala Giriş</h2><select id="student-list" onchange="showStudentScores()"><option value="">İsmini Seç...</option></select><div id="student-info-box" style="display:none; background:#2c3e50; padding:10px; border-radius:12px; margin:10px 0;"><div style="display:flex; justify-content:space-between; font-size:0.8rem;"><span>🤖 AI:</span> <span id="info-ai" style="color:#ffd54f">0</span></div><div style="display:flex; justify-content:space-between; font-size:0.8rem;"><span>🌐 Online:</span> <span id="info-online" style="color:#ffd54f">0</span></div></div><input type="password" id="password" placeholder="Şifre"><button class="btn btn-green" onclick="handleLogin()">Giriş Yap</button></div></div>
     <div id="lobby-selection" style="display:none;"><h2 style="margin-bottom: 15px;">Merhaba, <span id="display-name"></span></h2><button class="btn btn-green" onclick="startGame('AI')">Bilgisayara Karşı</button><button class="btn btn-green" onclick="startOnlineMode()">Çevrimiçi Eşleşme</button></div>
     <div id="waiting-screen" style="display:none;"><h3>🔄 Rakip Bekleniyor...</h3><button class="btn btn-reset" onclick="forceReset()">İptal Et</button></div>
@@ -93,19 +80,57 @@
         document.getElementById('waiting-screen').style.display = 'flex';
         const lobbyRef = rtdb.ref('lobby');
         const lobbySnap = await lobbyRef.get();
+        
         if (!lobbySnap.val()) {
             const newRoomRef = rtdb.ref('rooms').push();
             myRole = "p1"; currentRoomRef = newRoomRef;
             await newRoomRef.set({ p1: currentUser.ad_soyad, p2: "", board: board, turn: "p1", lastMove: -1, lastPlayer: "", ts: 0 });
             await lobbyRef.set(newRoomRef.key);
-            newRoomRef.on('value', snap => { const v = snap.val(); if (v && v.p2 !== "" && !isHandActive) showVSScreen(v); });
+            
+            // Bağlantı kopma ayarı
+            currentRoomRef.child('p1').onDisconnect().set(""); 
+
+            newRoomRef.on('value', snap => {
+                const v = snap.val();
+                if (v && v.p2 !== "" && !isHandActive) showVSScreen(v);
+                // Rakibi izleme mantığı buraya eklendi
+                if (v && isHandActive && v.p2 === "") handleOpponentLeft();
+            });
         } else {
             const roomId = lobbySnap.val();
             myRole = "p2"; currentRoomRef = rtdb.ref('rooms/' + roomId);
             await currentRoomRef.update({ p2: currentUser.ad_soyad });
             await lobbyRef.remove();
-            const snap = await currentRoomRef.get(); showVSScreen(snap.val());
+            
+            // Bağlantı kopma ayarı
+            currentRoomRef.child('p2').onDisconnect().set(""); 
+
+            const snap = await currentRoomRef.get();
+            showVSScreen(snap.val());
+
+            currentRoomRef.on('value', snap => {
+                const v = snap.val();
+                if (v && isHandActive && v.p1 === "") handleOpponentLeft();
+            });
         }
+    }
+
+    async function handleOpponentLeft() {
+        if (!isHandActive) return;
+        currentRoomRef.off(); 
+        isAnimating = true;
+        // Rakip kaçarsa hazinedeki puanları kaydet (opsiyonel)
+        alert("Rakip oyundan ayrıldı! Skorun kaydediliyor ve menüye dönülüyor.");
+        
+        const f = "skor_online";
+        try {
+            const userRef = db.collection('ogrenciler').doc(currentUser.id);
+            const docSnap = await userRef.get();
+            const yeniSkor = (docSnap.data()[f] || 0) + board[6];
+            await userRef.update({ [f]: yeniSkor });
+        } catch (e) { console.error(e); }
+        
+        forceReset();
     }
 
     function showVSScreen(data) {
@@ -144,19 +169,10 @@
             if (i === 6 || i === 13) c.className = 'stone-count count-treasury'; else if (i >= 7 && i <= 12) c.className = 'stone-count count-top'; else c.className = 'stone-count count-bottom';
             c.innerText = board[i]; p.appendChild(c);
             
-            // SARI IŞIK MANTIĞI (Geri Geldi)
             p.classList.remove('active-pit');
             if(!isAnimating) {
-                // Bilgisayara Karşı Modu
-                if(gameMode === "AI") {
-                    if(isPlayer1Turn && i <= 5) p.classList.add('active-pit');
-                    if(!isPlayer1Turn && i >= 7 && i <= 12) p.classList.add('active-pit');
-                } 
-                // Çevrimiçi Mod (Sadece sırası olan taraf parlar)
-                else if(gameMode === "ONLINE") {
-                    if(isPlayer1Turn && i <= 5) p.classList.add('active-pit');
-                    if(!isPlayer1Turn && i >= 7 && i <= 12) p.classList.add('active-pit');
-                }
+                if(isPlayer1Turn && i <= 5) p.classList.add('active-pit');
+                if(!isPlayer1Turn && i >= 7 && i <= 12) p.classList.add('active-pit');
             }
         }
     }
