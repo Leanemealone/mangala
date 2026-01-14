@@ -3,143 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    
-    <title>Mangala Online v14.1 - Mobil Responsive</title>
-
+    <title>Mangala Online v14.2 - Karşılaşma Ekranı</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
-
     <style>
         :root { --board-color: #8d6e63; --pit-color: #4e342e; --stone-color: #f5f5f5; --active-color: #ffd54f; }
+        body { display: flex; flex-direction: column; align-items: center; background-color: #2c3e50; font-family: 'Segoe UI', sans-serif; color: white; margin: 0; padding: 5px; overflow: hidden; touch-action: none; }
         
-        body { 
-            display: flex; flex-direction: column; align-items: center; 
-            background-color: #2c3e50; font-family: 'Segoe UI', sans-serif; 
-            color: white; margin: 0; padding: 5px; overflow: hidden; touch-action: none; 
+        /* VS EKRANI TASARIMI */
+        #vs-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, #1e90ff, #00008b);
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 15000; animation: fadeIn 0.5s;
         }
+        .vs-player { font-size: 3rem; color: #ffd54f; font-weight: 900; text-transform: uppercase; text-shadow: 4px 4px 0px #4e342e; margin: 20px; text-align: center; width: 80%; }
+        .vs-logo { width: 200px; height: 200px; background: url('https://img.icons8.com/color/200/vs-battle.png') no-repeat center; background-size: contain; transform: scale(1.2); animation: pulse 0.6s infinite alternate; }
+        @keyframes pulse { from { transform: scale(1.1); } to { transform: scale(1.3); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
+        /* Mevcut Stiller Korundu */
         .game-active, .game-active * { cursor: none !important; }
-
         #hand { position: fixed; width: 60px; height: 60px; background-image: url('https://raw.githubusercontent.com/Leanemealone/assets-images/refs/heads/main/handdd.png'); background-size: contain; background-repeat: no-repeat; z-index: 10001; pointer-events: none; display: none; transform: translate(-10px, -10px); }
-
         #auth-overlay, #lobby-selection, #waiting-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10000; }
         .auth-card { background: #34495e; padding: 20px; border-radius: 20px; text-align: center; width: 85%; max-width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        
-        /* Giriş Kutucukları Eşitleme */
         select, input { width: 100%; height: 42px; padding: 0 10px; margin: 8px 0; border-radius: 10px; border: none; font-size: 1rem; box-sizing: border-box; display: block; }
         #student-info-box { background: #2c3e50; margin: 10px 0; padding: 10px; border-radius: 12px; display: none; border: 1px solid #444; }
-
         #game-ui { display: none; flex-direction: column; align-items: center; width: 100%; height: 100vh; justify-content: center; }
         #stats-bar { display: flex; justify-content: space-around; width: 92%; background: #34495e; padding: 6px; border-radius: 20px; margin-bottom: 8px; font-size: 0.75rem; border: 1px solid #444; }
-
-        /* YENİ NESİL MOBİL TABLA TASARIMI (v14.0) */
-        #board { 
-            display: grid; 
-            grid-template-columns: repeat(8, 9.5vw); /* Sığmama sorunu için genişlik düşürüldü */
-            gap: 1.2vw; 
-            background: var(--board-color); 
-            padding: 20px 10px; 
-            border-radius: 15px; 
-            box-shadow: 0 15px 30px rgba(0,0,0,0.7); 
-            border: 6px solid #5d4037; 
-            position: relative;
-            max-width: 98vw;
-        }
-
-        .pit { 
-            width: 9.5vw; height: 9.5vw; background: var(--pit-color); 
-            border-radius: 50%; display: flex; flex-wrap: wrap; 
-            justify-content: center; align-content: center; padding: 3px; 
-            box-sizing: border-box; position: relative;
-            box-shadow: inset 4px 4px 10px rgba(0,0,0,0.6); 
-        }
-
+        #board { display: grid; grid-template-columns: repeat(8, 9.5vw); gap: 1.2vw; background: var(--board-color); padding: 20px 10px; border-radius: 15px; box-shadow: 0 15px 30px rgba(0,0,0,0.7); border: 6px solid #5d4037; position: relative; max-width: 98vw; }
+        .pit { width: 9.5vw; height: 9.5vw; background: var(--pit-color); border-radius: 50%; display: flex; flex-wrap: wrap; justify-content: center; align-content: center; padding: 3px; box-sizing: border-box; position: relative; box-shadow: inset 4px 4px 10px rgba(0,0,0,0.6); }
         .treasury { grid-row: span 2; height: 21vw; border-radius: 30px; }
-
-        .stone { 
-            width: 1.5vw; height: 1.5vw; 
-            background: radial-gradient(circle at 2px 2px, #eee, #999); 
-            border-radius: 50%; margin: 1px; 
-        }
-
+        .stone { width: 1.5vw; height: 1.5vw; background: radial-gradient(circle at 2px 2px, #eee, #999); border-radius: 50%; margin: 1px; }
         .stone-count { position: absolute; font-size: 0.9rem; color: #ffd54f; font-weight: bold; width: 100%; text-align: center; left: 0; pointer-events: none; text-shadow: 1px 1px 2px black; }
         .count-top { top: -22px; }
         .count-bottom { bottom: -22px; }
         .count-treasury { bottom: -18px; }
-
         .btn { padding: 10px 20px; font-size: 0.95rem; font-weight: bold; color: white; border: none; border-radius: 10px; cursor: pointer; margin: 5px; transition: 0.2s; }
         .btn-green { background: #27ae60; box-shadow: 0 3px #1e8449; }
         .btn-reset { background: #e74c3c; z-index: 20000; box-shadow: 0 3px #922b21; margin-top: 15px; }
-
-        @media (orientation: portrait) {
-            #game-ui::before {
-                content: "🔄 Lütfen Telefonu Yan Çevirin!";
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background: #2c3e50; z-index: 30000; display: flex;
-                justify-content: center; align-items: center; font-weight: bold; font-size: 1.2rem;
-            }
-        }
+        @media (orientation: portrait) { #game-ui::before { content: "🔄 Lütfen Telefonu Yan Çevirin!"; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; z-index: 30000; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1.2rem; } }
     </style>
 </head>
 <body>
     <div id="hand"></div>
     
-    <div id="auth-overlay">
-        <div class="auth-card">
-            <h2 style="margin-top:0; font-size:1.4rem;">Mangala Giriş</h2>
-            <select id="student-list" onchange="showStudentScores()"><option value="">İsmini Seç...</option></select>
-            <div id="student-info-box">
-                <div style="display:flex; justify-content:space-between; font-size:0.8rem;"><span>🤖 Bilgisayar:</span> <span id="info-ai" style="color:#ffd54f">0</span></div>
-                <div style="display:flex; justify-content:space-between; font-size:0.8rem;"><span>🌐 Online:</span> <span id="info-online" style="color:#ffd54f">0</span></div>
-            </div>
-            <input type="password" id="password" placeholder="Şifre">
-            <button class="btn btn-green" onclick="handleLogin()">Giriş Yap</button>
-        </div>
+    <div id="vs-screen">
+        <div id="p1-vs" class="vs-player">OYUNCU 1</div>
+        <div class="vs-logo"></div>
+        <div id="p2-vs" class="vs-player">OYUNCU 2</div>
     </div>
 
-    <div id="lobby-selection" style="display:none;">
-        <h2 style="margin-bottom: 15px; font-size: 1.3rem;">Merhaba, <span id="display-name"></span></h2>
-        <button class="btn btn-green" onclick="startGame('AI')">Bilgisayara Karşı</button>
-        <button class="btn btn-green" onclick="startOnlineMode()">Çevrimiçi Eşleşme</button>
-    </div>
-
+    <div id="auth-overlay"><div class="auth-card"><h2>Mangala Giriş</h2><select id="student-list" onchange="showStudentScores()"><option value="">İsmini Seç...</option></select><div id="student-info-box"><div style="display:flex; justify-content:space-between; font-size:0.8rem;"><span>🤖 Bilgisayar:</span> <span id="info-ai" style="color:#ffd54f">0</span></div><div style="display:flex; justify-content:space-between; font-size:0.8rem;"><span>🌐 Online:</span> <span id="info-online" style="color:#ffd54f">0</span></div></div><input type="password" id="password" placeholder="Şifre"><button class="btn btn-green" onclick="handleLogin()">Giriş Yap</button></div></div>
+    <div id="lobby-selection" style="display:none;"><h2 style="margin-bottom: 15px; font-size: 1.3rem;">Merhaba, <span id="display-name"></span></h2><button class="btn btn-green" onclick="startGame('AI')">Bilgisayara Karşı</button><button class="btn btn-green" onclick="startOnlineMode()">Çevrimiçi Eşleşme</button></div>
     <div id="waiting-screen" style="display:none;"><h3>🔄 Rakip Bekleniyor...</h3><button class="btn btn-reset" onclick="forceReset()">İptal Et</button></div>
-
-    <div id="game-ui">
-        <div id="stats-bar"><div id="user-label">Sen: ---</div><div id="opponent-label">Rakip: ---</div></div>
-        <div id="turn-indicator" style="font-size:1rem; margin-bottom:12px; color:#ffd54f; font-weight:bold;">Sıra Bekleniyor...</div>
-        <div id="board">
-            <div class="pit treasury" id="pit13"></div>
-            <div class="pit" onclick="handlePitClick(12)" id="pit12"></div>
-            <div class="pit" onclick="handlePitClick(11)" id="pit11"></div>
-            <div class="pit" onclick="handlePitClick(10)" id="pit10"></div>
-            <div class="pit" onclick="handlePitClick(9)" id="pit9"></div>
-            <div class="pit" onclick="handlePitClick(8)" id="pit8"></div>
-            <div class="pit" onclick="handlePitClick(7)" id="pit7"></div>
-            <div class="pit treasury" id="pit6"></div>
-            <div class="pit" onclick="handlePitClick(0)" id="pit0"></div>
-            <div class="pit" onclick="handlePitClick(1)" id="pit1"></div>
-            <div class="pit" onclick="handlePitClick(2)" id="pit2"></div>
-            <div class="pit" onclick="handlePitClick(3)" id="pit3"></div>
-            <div class="pit" onclick="handlePitClick(4)" id="pit4"></div>
-            <div class="pit" onclick="handlePitClick(5)" id="pit5"></div>
-        </div>
-        <button class="btn btn-reset" onclick="forceReset()">Menüye Dön</button>
-    </div>
+    <div id="game-ui"><div id="stats-bar"><div id="user-label">Sen: ---</div><div id="opponent-label">Rakip: ---</div></div><div id="turn-indicator" style="font-size:1rem; margin-bottom:12px; color:#ffd54f; font-weight:bold;">Sıra Bekleniyor...</div><div id="board"><div class="pit treasury" id="pit13"></div><div class="pit" onclick="handlePitClick(12)" id="pit12"></div><div class="pit" onclick="handlePitClick(11)" id="pit11"></div><div class="pit" onclick="handlePitClick(10)" id="pit10"></div><div class="pit" onclick="handlePitClick(9)" id="pit9"></div><div class="pit" onclick="handlePitClick(8)" id="pit8"></div><div class="pit" onclick="handlePitClick(7)" id="pit7"></div><div class="pit treasury" id="pit6"></div><div class="pit" onclick="handlePitClick(0)" id="pit0"></div><div class="pit" onclick="handlePitClick(1)" id="pit1"></div><div class="pit" onclick="handlePitClick(2)" id="pit2"></div><div class="pit" onclick="handlePitClick(3)" id="pit3"></div><div class="pit" onclick="handlePitClick(4)" id="pit4"></div><div class="pit" onclick="handlePitClick(5)" id="pit5"></div></div><button class="btn btn-reset" onclick="forceReset()">Menüye Dön</button></div>
 
 <script>
-    // Firebase ve Oyun Mantığı v13.9 ile aynı kararlılıkta korunmuştur.
-    const firebaseConfig = {
-        apiKey: "AIzaSyDcsk1VzI78PnMYeGvvY9CoLoiLxXl-4VQ",
-        projectId: "mangala-a967f",
-        databaseURL: "https://mangala-a967f-default-rtdb.europe-west1.firebasedatabase.app",
-        appId: "1:501041787727:web:f6a56b97c4415397078b3a"
-    };
+    const firebaseConfig = { apiKey: "AIzaSyDcsk1VzI78PnMYeGvvY9CoLoiLxXl-4VQ", projectId: "mangala-a967f", databaseURL: "https://mangala-a967f-default-rtdb.europe-west1.firebasedatabase.app", appId: "1:501041787727:web:f6a56b97c4415397078b3a" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const rtdb = firebase.database();
@@ -157,66 +82,17 @@
     let lastProcessedMoveTs = 0;
     let studentsData = {};
 
-    function updateHandPos(e) {
-        if (!isHandActive) return;
-        const hand = document.getElementById('hand');
-        let x = (e.type.includes('touch')) ? e.touches[0].clientX : e.clientX;
-        let y = (e.type.includes('touch')) ? e.touches[0].clientY : e.clientY;
-        hand.style.display = "block";
-        hand.style.left = x + 'px';
-        hand.style.top = y + 'px';
-    }
-    window.addEventListener('mousemove', updateHandPos);
-    window.addEventListener('touchstart', updateHandPos);
-    window.addEventListener('touchmove', updateHandPos);
+    function updateHandPos(e) { if (!isHandActive) return; const hand = document.getElementById('hand'); let x = (e.type.includes('touch')) ? e.touches[0].clientX : e.clientX; let y = (e.type.includes('touch')) ? e.touches[0].clientY : e.clientY; hand.style.display = "block"; hand.style.left = x + 'px'; hand.style.top = y + 'px'; }
+    window.addEventListener('mousemove', updateHandPos); window.addEventListener('touchstart', updateHandPos); window.addEventListener('touchmove', updateHandPos);
 
-    async function loadStudents() {
-        try {
-            const select = document.getElementById('student-list');
-            const snapshot = await db.collection('ogrenciler').get();
-            select.innerHTML = '<option value="">İsmini Seç...</option>';
-            snapshot.forEach(doc => {
-                studentsData[doc.id] = doc.data();
-                let opt = document.createElement('option');
-                opt.value = doc.id; opt.textContent = doc.data().ad_soyad;
-                select.appendChild(opt);
-            });
-        } catch (e) { console.error(e); }
-    }
+    async function loadStudents() { try { const select = document.getElementById('student-list'); const snapshot = await db.collection('ogrenciler').get(); select.innerHTML = '<option value="">İsmini Seç...</option>'; snapshot.forEach(doc => { studentsData[doc.id] = doc.data(); let opt = document.createElement('option'); opt.value = doc.id; opt.textContent = doc.data().ad_soyad; select.appendChild(opt); }); } catch (e) { console.error(e); } }
     loadStudents();
 
-    function showStudentScores() {
-        const id = document.getElementById('student-list').value;
-        const box = document.getElementById('student-info-box');
-        if (id && studentsData[id]) {
-            document.getElementById('info-ai').innerText = studentsData[id].skor_ai || 0;
-            document.getElementById('info-online').innerText = studentsData[id].skor_online || 0;
-            box.style.display = 'block';
-        } else box.style.display = 'none';
-    }
+    function showStudentScores() { const id = document.getElementById('student-list').value; const box = document.getElementById('student-info-box'); if (id && studentsData[id]) { document.getElementById('info-ai').innerText = studentsData[id].skor_ai || 0; document.getElementById('info-online').innerText = studentsData[id].skor_online || 0; box.style.display = 'block'; } else box.style.display = 'none'; }
+    async function handleLogin() { const id = document.getElementById('student-list').value; const pass = document.getElementById('password').value; if (!id || studentsData[id].sifre !== pass) return alert("Bilgileri kontrol edin!"); currentUser = { id, ...studentsData[id] }; document.getElementById('auth-overlay').style.display = 'none'; document.getElementById('lobby-selection').style.display = 'flex'; document.getElementById('display-name').innerText = currentUser.ad_soyad; }
+    function forceReset() { if (typeof currentRoomRef !== 'undefined' && currentRoomRef !== null) currentRoomRef.off(); window.location.replace(window.location.pathname); }
 
-    async function handleLogin() {
-        const id = document.getElementById('student-list').value;
-        const pass = document.getElementById('password').value;
-        if (!id || studentsData[id].sifre !== pass) return alert("Bilgileri kontrol edin!");
-        currentUser = { id, ...studentsData[id] };
-        document.getElementById('auth-overlay').style.display = 'none';
-        document.getElementById('lobby-selection').style.display = 'flex';
-        document.getElementById('display-name').innerText = currentUser.ad_soyad;
-    }
-
-    function forceReset() {
-    // currentRoomRef değişkeninin varlığını ve tanımlı olup olmadığını kontrol et
-    if (typeof currentRoomRef !== 'undefined' && currentRoomRef !== null) {
-        try {
-            currentRoomRef.off(); // Firebase dinleyicisini kapat
-        } catch(e) {
-            console.log("Dinleyici kapatılamadı:", e);
-        }
-    }
-    // Sayfayı tazeleyerek menüye dön
-    window.location.replace(window.location.pathname);
-}
+    // ONLINE EŞLEŞME VE VS EKRANI MANTIĞI
     async function startOnlineMode() {
         gameMode = "ONLINE";
         document.getElementById('lobby-selection').style.display = 'none';
@@ -228,19 +104,32 @@
             myRole = "p1"; currentRoomRef = newRoomRef;
             await newRoomRef.set({ p1: currentUser.ad_soyad, p2: "", board: board, turn: "p1", lastMove: -1, lastPlayer: "", ts: 0 });
             await lobbyRef.set(newRoomRef.key);
-            newRoomRef.on('value', snap => { const v = snap.val(); if (v && v.p2 !== "" && !isHandActive) setupUI(v); });
+            newRoomRef.on('value', snap => { const v = snap.val(); if (v && v.p2 !== "" && !isHandActive) showVSScreen(v); });
         } else {
             const roomId = lobbySnap.val();
             myRole = "p2"; currentRoomRef = rtdb.ref('rooms/' + roomId);
             await currentRoomRef.update({ p2: currentUser.ad_soyad });
             await lobbyRef.remove();
-            const snap = await currentRoomRef.get(); setupUI(snap.val());
+            const snap = await currentRoomRef.get(); showVSScreen(snap.val());
         }
+    }
+
+    function showVSScreen(data) {
+        document.getElementById('waiting-screen').style.display = 'none';
+        const vsDiv = document.getElementById('vs-screen');
+        document.getElementById('p1-vs').innerText = data.p1;
+        document.getElementById('p2-vs').innerText = data.p2;
+        vsDiv.style.display = 'flex';
+        
+        // 3 saniye sonra oyuna başla
+        setTimeout(() => {
+            vsDiv.style.display = 'none';
+            setupUI(data);
+        }, 3000);
     }
 
     function setupUI(data) {
         isHandActive = true;
-        document.getElementById('waiting-screen').style.display = 'none';
         document.getElementById('game-ui').style.display = 'flex';
         document.body.classList.add('game-active');
         opponentName = (myRole === "p1" ? data.p2 : data.p1);
@@ -248,9 +137,7 @@
         document.getElementById('user-label').innerText = "Sen: " + currentUser.ad_soyad;
         currentRoomRef.on('value', async snap => {
             const val = snap.val(); if(!val) return;
-            if (val.lastPlayer !== "" && val.lastPlayer !== myRole && val.ts > lastProcessedMoveTs) {
-                lastProcessedMoveTs = val.ts; await play(val.lastMove);
-            }
+            if (val.lastPlayer !== "" && val.lastPlayer !== myRole && val.ts > lastProcessedMoveTs) { lastProcessedMoveTs = val.ts; await play(val.lastMove); }
             if (!isAnimating) { board = [...val.board]; isPlayer1Turn = (val.turn === "p1"); updateUI(); }
         });
     }
@@ -271,14 +158,11 @@
         const p1Name = (gameMode === "ONLINE" && myRole === "p2") ? opponentName : currentUser.ad_soyad;
         const p2Name = (gameMode === "ONLINE" && myRole === "p2") ? currentUser.ad_soyad : opponentName;
         ind.innerText = isPlayer1Turn ? `Sıra: ${p1Name}` : `Sıra: ${p2Name}`;
-
         for (let i = 0; i < 14; i++) {
             const p = document.getElementById('pit' + i); p.innerHTML = "";
             for (let s = 0; s < board[i]; s++) { const st = document.createElement('div'); st.className = 'stone'; p.appendChild(st); }
             const c = document.createElement('div');
-            if (i === 6 || i === 13) c.className = 'stone-count count-treasury';
-            else if (i >= 7 && i <= 12) c.className = 'stone-count count-top';
-            else c.className = 'stone-count count-bottom';
+            if (i === 6 || i === 13) c.className = 'stone-count count-treasury'; else if (i >= 7 && i <= 12) c.className = 'stone-count count-top'; else c.className = 'stone-count count-bottom';
             c.innerText = board[i]; p.appendChild(c);
             p.classList.remove('active-pit');
             if(!isAnimating) {
@@ -288,64 +172,11 @@
         }
     }
 
-    async function handlePitClick(i) {
-        if (isAnimating || board[i] === 0) return;
-        if (gameMode === "ONLINE" && ((myRole === "p1" && !isPlayer1Turn) || (myRole === "p2" && isPlayer1Turn))) return;
-        await play(i);
-        if (gameMode === "ONLINE") await currentRoomRef.update({ board: board, turn: isPlayer1Turn ? "p1" : "p2", lastMove: i, lastPlayer: myRole, ts: Date.now() });
-        if (gameMode === "AI" && !isPlayer1Turn) { await new Promise(r => setTimeout(r, 1000)); aiMove(); }
-    }
-
-    async function play(index) {
-        isAnimating = true;
-        let stones = board[index]; board[index] = 0;
-        clickSound.currentTime = 0; clickSound.play().catch(()=>{});
-        updateUI(); await new Promise(r => setTimeout(r, 400));
-        let cur = index;
-        if (stones === 1) { cur = (cur + 1) % 14; board[cur]++; updateUI(); await new Promise(r => setTimeout(r, 400)); }
-        else {
-            board[index] = 1; stones--; updateUI(); await new Promise(r => setTimeout(r, 400));
-            while (stones > 0) {
-                cur = (cur + 1) % 14; if (isPlayer1Turn && cur === 13) continue; if (!isPlayer1Turn && cur === 6) continue;
-                board[cur]++; stones--; clickSound.currentTime = 0; clickSound.play().catch(()=>{}); updateUI(); await new Promise(r => setTimeout(r, 400));
-            }
-        }
-        checkRules(cur); isAnimating = false; await checkGameOver(); updateUI();
-    }
-
-    function checkRules(last) {
-        if ((isPlayer1Turn && last === 6) || (!isPlayer1Turn && last === 13)) return;
-        if (isPlayer1Turn && last >= 7 && last <= 12 && board[last] % 2 === 0) { board[6] += board[last]; board[last] = 0; }
-        else if (!isPlayer1Turn && last >= 0 && last <= 5 && board[last] % 2 === 0) { board[13] += board[last]; board[last] = 0; }
-        if (board[last] === 1) {
-            let opp = 12 - last;
-            if (isPlayer1Turn && last <= 5 && board[opp] > 0) { board[6] += board[last] + board[opp]; board[last] = 0; board[opp] = 0; }
-            else if (!isPlayer1Turn && last >= 7 && last <= 12 && board[opp] > 0) { board[13] += board[last] + board[opp]; board[last] = 0; board[opp] = 0; }
-        }
-        isPlayer1Turn = !isPlayer1Turn;
-    }
-
+    async function handlePitClick(i) { if (isAnimating || board[i] === 0) return; if (gameMode === "ONLINE" && ((myRole === "p1" && !isPlayer1Turn) || (myRole === "p2" && isPlayer1Turn))) return; await play(i); if (gameMode === "ONLINE") await currentRoomRef.update({ board: board, turn: isPlayer1Turn ? "p1" : "p2", lastMove: i, lastPlayer: myRole, ts: Date.now() }); if (gameMode === "AI" && !isPlayer1Turn) { await new Promise(r => setTimeout(r, 1000)); aiMove(); } }
+    async function play(index) { isAnimating = true; let stones = board[index]; board[index] = 0; clickSound.currentTime = 0; clickSound.play().catch(()=>{}); updateUI(); await new Promise(r => setTimeout(r, 400)); let cur = index; if (stones === 1) { cur = (cur + 1) % 14; board[cur]++; updateUI(); await new Promise(r => setTimeout(r, 400)); } else { board[index] = 1; stones--; updateUI(); await new Promise(r => setTimeout(r, 400)); while (stones > 0) { cur = (cur + 1) % 14; if (isPlayer1Turn && cur === 13) continue; if (!isPlayer1Turn && cur === 6) continue; board[cur]++; stones--; clickSound.currentTime = 0; clickSound.play().catch(()=>{}); updateUI(); await new Promise(r => setTimeout(r, 400)); } } checkRules(cur); isAnimating = false; await checkGameOver(); updateUI(); }
+    function checkRules(last) { if ((isPlayer1Turn && last === 6) || (!isPlayer1Turn && last === 13)) return; if (isPlayer1Turn && last >= 7 && last <= 12 && board[last] % 2 === 0) { board[6] += board[last]; board[last] = 0; } else if (!isPlayer1Turn && last >= 0 && last <= 5 && board[last] % 2 === 0) { board[13] += board[last]; board[last] = 0; } if (board[last] === 1) { let opp = 12 - last; if (isPlayer1Turn && last <= 5 && board[opp] > 0) { board[6] += board[last] + board[opp]; board[last] = 0; board[opp] = 0; } else if (!isPlayer1Turn && last >= 7 && last <= 12 && board[opp] > 0) { board[13] += board[last] + board[opp]; board[last] = 0; board[opp] = 0; } } isPlayer1Turn = !isPlayer1Turn; }
     function aiMove() { let m = []; for(let i=7; i<=12; i++) if(board[i]>0) m.push(i); if(m.length) handlePitClick(m[Math.floor(Math.random()*m.length)]); }
-
-    async function checkGameOver() {
-        if (board.slice(0, 6).every(v => v === 0) || board.slice(7, 13).every(v => v === 0)) {
-            isAnimating = true;
-            for (let i = 0; i < 6; i++) { board[6] += board[i]; board[i] = 0; }
-            for (let i = 7; i < 13; i++) { board[13] += board[i]; board[i] = 0; }
-            updateUI();
-            const f = (gameMode === "AI") ? "skor_ai" : "skor_online";
-            try {
-                const userRef = db.collection('ogrenciler').doc(currentUser.id);
-                const docSnap = await userRef.get();
-                const yeniSkor = (docSnap.data()[f] || 0) + board[6];
-                await userRef.update({ [f]: yeniSkor });
-                alert("Oyun Bitti! Skorun: " + yeniSkor);
-                forceReset();
-            } catch (e) { console.error(e); forceReset(); }
-        }
-    }
+    async function checkGameOver() { if (board.slice(0, 6).every(v => v === 0) || board.slice(7, 13).every(v => v === 0)) { isAnimating = true; for (let i = 0; i < 6; i++) { board[6] += board[i]; board[i] = 0; } for (let i = 7; i < 13; i++) { board[13] += board[i]; board[i] = 0; } updateUI(); const f = (gameMode === "AI") ? "skor_ai" : "skor_online"; try { const userRef = db.collection('ogrenciler').doc(currentUser.id); const docSnap = await userRef.get(); const yeniSkor = (docSnap.data()[f] || 0) + board[6]; await userRef.update({ [f]: yeniSkor }); alert("Oyun Bitti! Skorun: " + yeniSkor); forceReset(); } catch (e) { console.error(e); forceReset(); } } }
 </script>
 </body>
 </html>
-
-
