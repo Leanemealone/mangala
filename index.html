@@ -206,10 +206,17 @@
     }
 
     function forceReset() {
-        if (typeof currentRoomRef !== 'undefined' && currentRoomRef !== null) currentRoomRef.off();
-        window.location.replace(window.location.pathname);
+    // currentRoomRef değişkeninin varlığını ve tanımlı olup olmadığını kontrol et
+    if (typeof currentRoomRef !== 'undefined' && currentRoomRef !== null) {
+        try {
+            currentRoomRef.off(); // Firebase dinleyicisini kapat
+        } catch(e) {
+            console.log("Dinleyici kapatılamadı:", e);
+        }
     }
-
+    // Sayfayı tazeleyerek menüye dön
+    window.location.replace(window.location.pathname);
+}
     async function startOnlineMode() {
         gameMode = "ONLINE";
         document.getElementById('lobby-selection').style.display = 'none';
@@ -340,4 +347,5 @@
 </script>
 </body>
 </html>
+
 
