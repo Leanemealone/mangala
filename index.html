@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mangala Online v13.8 - Mobil Yatay Uyum</title>
+    <title>Mangala Online v13.9 - Metin Düzenleme</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
@@ -28,10 +28,9 @@
         #game-ui { display: none; flex-direction: column; align-items: center; width: 100%; height: 100vh; justify-content: center; }
         #stats-bar { display: flex; justify-content: space-around; width: 95%; background: #34495e; padding: 8px; border-radius: 25px; margin-bottom: 10px; font-size: 0.8rem; border: 1px solid #444; }
 
-        /* MOBİL YATAY TABLA TASARIMI */
         #board { 
             display: grid; 
-            grid-template-columns: repeat(8, 11vw); /* Kuyular ekran genişliğine göre esner */
+            grid-template-columns: repeat(8, 11vw); 
             gap: 1.5vw; 
             background: var(--board-color); 
             padding: 25px 15px; 
@@ -63,8 +62,9 @@
         .count-bottom { bottom: -25px; }
         .count-treasury { bottom: -20px; }
 
-        .btn { padding: 10px 20px; font-size: 0.9rem; font-weight: bold; color: white; border: none; border-radius: 10px; cursor: pointer; margin: 5px; }
-        .btn-green { background: #27ae60; }
+        .btn { padding: 12px 25px; font-size: 1rem; font-weight: bold; color: white; border: none; border-radius: 12px; cursor: pointer; margin: 8px; transition: 0.3s; }
+        .btn-green { background: #27ae60; box-shadow: 0 4px #1e8449; }
+        .btn-green:active { transform: translateY(2px); box-shadow: 0 2px #1e8449; }
         .btn-reset { background: #e74c3c; z-index: 20000; }
 
         @media (orientation: portrait) {
@@ -79,13 +79,14 @@
 </head>
 <body>
     <div id="hand"></div>
+    
     <div id="auth-overlay">
         <div class="auth-card">
             <h2>Mangala Giriş</h2>
             <select id="student-list" onchange="showStudentScores()"><option value="">İsmini Seç...</option></select>
             <div id="student-info-box" style="display:none; background:#2c3e50; padding:10px; border-radius:10px; margin:10px 0;">
-                <div style="display:flex; justify-content:space-between; font-size:0.8rem;"><span>🤖 AI:</span> <span id="info-ai" style="color:#ffd54f">0</span></div>
-                <div style="display:flex; justify-content:space-between; font-size:0.8rem;"><span>🌐 Online:</span> <span id="info-online" style="color:#ffd54f">0</span></div>
+                <div style="display:flex; justify-content:space-between; font-size:0.8rem;"><span>🤖 Bilgisayar Skoru:</span> <span id="info-ai" style="color:#ffd54f">0</span></div>
+                <div style="display:flex; justify-content:space-between; font-size:0.8rem;"><span>🌐 Çevrimiçi Skor:</span> <span id="info-online" style="color:#ffd54f">0</span></div>
             </div>
             <input type="password" id="password" placeholder="Şifre">
             <button class="btn btn-green" onclick="handleLogin()">Giriş Yap</button>
@@ -93,16 +94,16 @@
     </div>
 
     <div id="lobby-selection" style="display:none;">
-        <h3 id="display-name"></h3>
-        <button class="btn btn-green" onclick="startGame('AI')">AI</button>
-        <button class="btn btn-green" onclick="startOnlineMode()">Online</button>
+        <h2 style="margin-bottom: 20px;">Hoş Geldin, <span id="display-name"></span></h2>
+        <button class="btn btn-green" onclick="startGame('AI')">Bilgisayara Karşı</button>
+        <button class="btn btn-green" onclick="startOnlineMode()">Çevrimiçi Eşleşme</button>
     </div>
 
-    <div id="waiting-screen" style="display:none;"><h3>Eşleşme...</h3><button class="btn btn-reset" onclick="forceReset()">İptal</button></div>
+    <div id="waiting-screen" style="display:none;"><h3>🔄 Rakip Bekleniyor...</h3><button class="btn btn-reset" onclick="forceReset()">İptal Et</button></div>
 
     <div id="game-ui">
-        <div id="stats-bar"><div id="user-label">Sen</div><div id="opponent-label">Rakip</div></div>
-        <div id="turn-indicator" style="font-size:1.2rem; margin-bottom:10px; color:#ffd54f; font-weight:bold;">Sıra...</div>
+        <div id="stats-bar"><div id="user-label">Sen: ---</div><div id="opponent-label">Rakip: ---</div></div>
+        <div id="turn-indicator" style="font-size:1.2rem; margin-bottom:10px; color:#ffd54f; font-weight:bold;">Sıra Bekleniyor...</div>
         <div id="board">
             <div class="pit treasury" id="pit13"></div>
             <div class="pit" onclick="handlePitClick(12)" id="pit12"></div>
@@ -123,7 +124,6 @@
     </div>
 
 <script>
-    // (JavaScript mantığı v13.7 ile birebir aynı kalacak, sadece UI güncellemeleri yansıyacak)
     const firebaseConfig = {
         apiKey: "AIzaSyDcsk1VzI78PnMYeGvvY9CoLoiLxXl-4VQ",
         projectId: "mangala-a967f",
@@ -188,7 +188,7 @@
     async function handleLogin() {
         const id = document.getElementById('student-list').value;
         const pass = document.getElementById('password').value;
-        if (!id || studentsData[id].sifre !== pass) return alert("Hatalı!");
+        if (!id || studentsData[id].sifre !== pass) return alert("Bilgileri kontrol edin!");
         currentUser = { id, ...studentsData[id] };
         document.getElementById('auth-overlay').style.display = 'none';
         document.getElementById('lobby-selection').style.display = 'flex';
@@ -244,6 +244,8 @@
         document.getElementById('lobby-selection').style.display = 'none';
         document.getElementById('game-ui').style.display = 'flex';
         document.body.classList.add('game-active');
+        document.getElementById('opponent-label').innerText = "Rakip: " + opponentName;
+        document.getElementById('user-label').innerText = "Sen: " + currentUser.ad_soyad;
         updateUI();
     }
 
@@ -320,7 +322,7 @@
                 const docSnap = await userRef.get();
                 const yeniSkor = (docSnap.data()[f] || 0) + board[6];
                 await userRef.update({ [f]: yeniSkor });
-                alert("Bitti! Skorun: " + yeniSkor);
+                alert("Oyun Bitti! Skorun: " + yeniSkor);
                 forceReset();
             } catch (e) { console.error(e); forceReset(); }
         }
