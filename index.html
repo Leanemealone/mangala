@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mangala Online v13.9 - Metin Düzenleme</title>
+    <title>Mangala Online v14.0 - Mobil Responsive</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
@@ -13,66 +13,68 @@
         body { 
             display: flex; flex-direction: column; align-items: center; 
             background-color: #2c3e50; font-family: 'Segoe UI', sans-serif; 
-            color: white; margin: 0; padding: 10px; overflow-x: hidden; touch-action: none; 
+            color: white; margin: 0; padding: 5px; overflow: hidden; touch-action: none; 
         }
 
         .game-active, .game-active * { cursor: none !important; }
 
-        #hand { position: fixed; width: 80px; height: 80px; background-image: url('https://raw.githubusercontent.com/Leanemealone/assets-images/refs/heads/main/handdd.png'); background-size: contain; background-repeat: no-repeat; z-index: 10001; pointer-events: none; display: none; transform: translate(-10px, -10px); }
+        #hand { position: fixed; width: 60px; height: 60px; background-image: url('https://raw.githubusercontent.com/Leanemealone/assets-images/refs/heads/main/handdd.png'); background-size: contain; background-repeat: no-repeat; z-index: 10001; pointer-events: none; display: none; transform: translate(-10px, -10px); }
 
         #auth-overlay, #lobby-selection, #waiting-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10000; }
-        .auth-card { background: #34495e; padding: 20px; border-radius: 20px; text-align: center; width: 90%; max-width: 350px; }
+        .auth-card { background: #34495e; padding: 20px; border-radius: 20px; text-align: center; width: 85%; max-width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         
-        select, input { width: 100%; height: 45px; padding: 0 10px; margin: 8px 0; border-radius: 10px; border: none; font-size: 1rem; box-sizing: border-box; }
+        /* Giriş Kutucukları Eşitleme */
+        select, input { width: 100%; height: 42px; padding: 0 10px; margin: 8px 0; border-radius: 10px; border: none; font-size: 1rem; box-sizing: border-box; display: block; }
+        #student-info-box { background: #2c3e50; margin: 10px 0; padding: 10px; border-radius: 12px; display: none; border: 1px solid #444; }
 
         #game-ui { display: none; flex-direction: column; align-items: center; width: 100%; height: 100vh; justify-content: center; }
-        #stats-bar { display: flex; justify-content: space-around; width: 95%; background: #34495e; padding: 8px; border-radius: 25px; margin-bottom: 10px; font-size: 0.8rem; border: 1px solid #444; }
+        #stats-bar { display: flex; justify-content: space-around; width: 92%; background: #34495e; padding: 6px; border-radius: 20px; margin-bottom: 8px; font-size: 0.75rem; border: 1px solid #444; }
 
+        /* YENİ NESİL MOBİL TABLA TASARIMI (v14.0) */
         #board { 
             display: grid; 
-            grid-template-columns: repeat(8, 11vw); 
-            gap: 1.5vw; 
+            grid-template-columns: repeat(8, 9.5vw); /* Sığmama sorunu için genişlik düşürüldü */
+            gap: 1.2vw; 
             background: var(--board-color); 
-            padding: 25px 15px; 
-            border-radius: 20px; 
+            padding: 20px 10px; 
+            border-radius: 15px; 
             box-shadow: 0 15px 30px rgba(0,0,0,0.7); 
-            border: 8px solid #5d4037; 
+            border: 6px solid #5d4037; 
             position: relative;
             max-width: 98vw;
         }
 
         .pit { 
-            width: 11vw; height: 11vw; background: var(--pit-color); 
+            width: 9.5vw; height: 9.5vw; background: var(--pit-color); 
             border-radius: 50%; display: flex; flex-wrap: wrap; 
-            justify-content: center; align-content: center; padding: 5px; 
+            justify-content: center; align-content: center; padding: 3px; 
             box-sizing: border-box; position: relative;
             box-shadow: inset 4px 4px 10px rgba(0,0,0,0.6); 
         }
 
-        .treasury { grid-row: span 2; height: 24vw; border-radius: 40px; }
+        .treasury { grid-row: span 2; height: 21vw; border-radius: 30px; }
 
         .stone { 
-            width: 1.8vw; height: 1.8vw; 
-            background: radial-gradient(circle at 3px 3px, #eee, #999); 
+            width: 1.5vw; height: 1.5vw; 
+            background: radial-gradient(circle at 2px 2px, #eee, #999); 
             border-radius: 50%; margin: 1px; 
         }
 
-        .stone-count { position: absolute; font-size: 1rem; color: #ffd54f; font-weight: bold; width: 100%; text-align: center; left: 0; pointer-events: none; }
-        .count-top { top: -25px; }
-        .count-bottom { bottom: -25px; }
-        .count-treasury { bottom: -20px; }
+        .stone-count { position: absolute; font-size: 0.9rem; color: #ffd54f; font-weight: bold; width: 100%; text-align: center; left: 0; pointer-events: none; text-shadow: 1px 1px 2px black; }
+        .count-top { top: -22px; }
+        .count-bottom { bottom: -22px; }
+        .count-treasury { bottom: -18px; }
 
-        .btn { padding: 12px 25px; font-size: 1rem; font-weight: bold; color: white; border: none; border-radius: 12px; cursor: pointer; margin: 8px; transition: 0.3s; }
-        .btn-green { background: #27ae60; box-shadow: 0 4px #1e8449; }
-        .btn-green:active { transform: translateY(2px); box-shadow: 0 2px #1e8449; }
-        .btn-reset { background: #e74c3c; z-index: 20000; }
+        .btn { padding: 10px 20px; font-size: 0.95rem; font-weight: bold; color: white; border: none; border-radius: 10px; cursor: pointer; margin: 5px; transition: 0.2s; }
+        .btn-green { background: #27ae60; box-shadow: 0 3px #1e8449; }
+        .btn-reset { background: #e74c3c; z-index: 20000; box-shadow: 0 3px #922b21; margin-top: 15px; }
 
         @media (orientation: portrait) {
             #game-ui::before {
-                content: "Lütfen cihazınızı yatay çevirin!";
+                content: "🔄 Lütfen Telefonu Yan Çevirin!";
                 position: fixed; top: 0; left: 0; width: 100%; height: 100%;
                 background: #2c3e50; z-index: 30000; display: flex;
-                justify-content: center; align-items: center; font-weight: bold;
+                justify-content: center; align-items: center; font-weight: bold; font-size: 1.2rem;
             }
         }
     </style>
@@ -82,11 +84,11 @@
     
     <div id="auth-overlay">
         <div class="auth-card">
-            <h2>Mangala Giriş</h2>
+            <h2 style="margin-top:0; font-size:1.4rem;">Mangala Giriş</h2>
             <select id="student-list" onchange="showStudentScores()"><option value="">İsmini Seç...</option></select>
-            <div id="student-info-box" style="display:none; background:#2c3e50; padding:10px; border-radius:10px; margin:10px 0;">
-                <div style="display:flex; justify-content:space-between; font-size:0.8rem;"><span>🤖 Bilgisayar Skoru:</span> <span id="info-ai" style="color:#ffd54f">0</span></div>
-                <div style="display:flex; justify-content:space-between; font-size:0.8rem;"><span>🌐 Çevrimiçi Skor:</span> <span id="info-online" style="color:#ffd54f">0</span></div>
+            <div id="student-info-box">
+                <div style="display:flex; justify-content:space-between; font-size:0.8rem;"><span>🤖 Bilgisayar:</span> <span id="info-ai" style="color:#ffd54f">0</span></div>
+                <div style="display:flex; justify-content:space-between; font-size:0.8rem;"><span>🌐 Online:</span> <span id="info-online" style="color:#ffd54f">0</span></div>
             </div>
             <input type="password" id="password" placeholder="Şifre">
             <button class="btn btn-green" onclick="handleLogin()">Giriş Yap</button>
@@ -94,7 +96,7 @@
     </div>
 
     <div id="lobby-selection" style="display:none;">
-        <h2 style="margin-bottom: 20px;">Hoş Geldin, <span id="display-name"></span></h2>
+        <h2 style="margin-bottom: 15px; font-size: 1.3rem;">Merhaba, <span id="display-name"></span></h2>
         <button class="btn btn-green" onclick="startGame('AI')">Bilgisayara Karşı</button>
         <button class="btn btn-green" onclick="startOnlineMode()">Çevrimiçi Eşleşme</button>
     </div>
@@ -103,7 +105,7 @@
 
     <div id="game-ui">
         <div id="stats-bar"><div id="user-label">Sen: ---</div><div id="opponent-label">Rakip: ---</div></div>
-        <div id="turn-indicator" style="font-size:1.2rem; margin-bottom:10px; color:#ffd54f; font-weight:bold;">Sıra Bekleniyor...</div>
+        <div id="turn-indicator" style="font-size:1rem; margin-bottom:12px; color:#ffd54f; font-weight:bold;">Sıra Bekleniyor...</div>
         <div id="board">
             <div class="pit treasury" id="pit13"></div>
             <div class="pit" onclick="handlePitClick(12)" id="pit12"></div>
@@ -124,6 +126,7 @@
     </div>
 
 <script>
+    // Firebase ve Oyun Mantığı v13.9 ile aynı kararlılıkta korunmuştur.
     const firebaseConfig = {
         apiKey: "AIzaSyDcsk1VzI78PnMYeGvvY9CoLoiLxXl-4VQ",
         projectId: "mangala-a967f",
