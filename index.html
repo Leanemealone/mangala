@@ -208,8 +208,10 @@
             box-shadow: 1px 1px 2px rgba(0,0,0,0.4);
         }
 
-        .stone-count { position: absolute; font-size: clamp(0.72rem, 1.7vmin, 0.95rem); color: #fff176; font-weight: bold; width: 100%; text-align: center; left: 0; pointer-events: none; }
-        .count-top { top: -22px; } .count-bottom { bottom: -22px; } .count-treasury { bottom: -20px; }
+        .stone-count { position: absolute; font-size: clamp(0.72rem, 1.7vmin, 0.95rem); color: #fff176; font-weight: bold; width: 100%; text-align: center; left: 0; pointer-events: none; line-height: 1; }
+        .count-top { top: calc(-1 * clamp(16px, 2.1vmin, 22px)); }
+        .count-bottom { bottom: calc(-1 * clamp(16px, 2.1vmin, 22px)); }
+        .count-treasury { bottom: calc(-1 * clamp(14px, 1.9vmin, 20px)); }
 
         /* VS Ekranı */
         #vs-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #1e3c72, #2a5298); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 25000; }
@@ -237,6 +239,7 @@
 
         #board.board-flipped .stone-count {
             transform: rotate(180deg);
+            transform-origin: center;
         }
 
         @media (orientation: portrait) {
@@ -411,6 +414,8 @@
     let firebaseConnected = false;
     let networkQuality = "medium";
     const sessionId = "sess_" + Math.random().toString(36).slice(2) + Date.now();
+    let waitRoomHandler = null;
+    let hasStartedOnlineGame = false;
 
     function setViewportHeightVar() {
         const vh = window.innerHeight * 0.01;
@@ -430,6 +435,31 @@
         const boardEl = document.getElementById('board');
         boardFlippedForPlayer = (gameMode === "ONLINE" && myRole === "p2");
         boardEl.classList.toggle('board-flipped', boardFlippedForPlayer);
+    }
+
+    function teardownRoomListeners() {
+        if (!currentRoomRef) return;
+        if (roomValueHandler) currentRoomRef.off('value', roomValueHandler);
+        if (waitRoomHandler) currentRoomRef.off('value', waitRoomHandler);
+        roomValueHandler = null;
+        waitRoomHandler = null;
+    }
+
+    function updateWaitingText(roomVal) {
+        const waitingTitle = document.querySelector('#waiting-screen h3');
+        if (!waitingTitle || !roomVal) return;
+        if (myRole === "p1") waitingTitle.innerText = `🔄 Rakip Bekleniyor... (${roomVal.p1})`;
+        else waitingTitle.innerText = `✅ Eşleşti: ${roomVal.p1} vs ${roomVal.p2}`;
+    }
+
+    function maybeStartOnlineGame(roomVal) {
+        if (!roomVal || hasStartedOnlineGame) return;
+        updateWaitingText(roomVal);
+        if (roomVal.p1 && roomVal.p2) {
+            hasStartedOnlineGame = true;
+            teardownRoomListeners();
+            showVSScreen(roomVal);
+        }
     }
 
     function updateConnectionIndicator(forceText) {
@@ -477,7 +507,9 @@
             if (!isAnimating) { board = [...val.board]; isPlayer1Turn = (val.turn === "p1"); updateUI(); }
             if (isHandActive) {
                 const meLeft = (myRole === "p1" && val.p1 === "") || (myRole === "p2" && val.p2 === "");
+                const oppLeft = (myRole === "p1" && val.p2 === "") || (myRole === "p2" && val.p1 === "");
                 if (meLeft) await currentRoomRef.update({ [myRole]: currentUser.ad_soyad });
+                if (oppLeft) await handleOpponentLeft();
             }
         };
         currentRoomRef.on('value', roomValueHandler);
@@ -582,8 +614,10 @@
 
     async function startOnlineMode() {
         gameMode = "ONLINE";
+        hasStartedOnlineGame = false;
         document.getElementById('lobby-selection').style.display = 'none';
         document.getElementById('waiting-screen').style.display = 'flex';
+        document.querySelector('#waiting-screen h3').innerText = "🔄 Rakip Bekleniyor...";
         const lobbyRef = rtdb.ref('lobby');
         const lobbySnap = await lobbyRef.get();
         if (!lobbySnap.val()) {
@@ -592,7 +626,8 @@
             await newRoomRef.set({ p1: currentUser.ad_soyad, p2: "", board: board, turn: "p1", lastMove: -1, lastPlayer: "", ts: 0 });
             await lobbyRef.set(newRoomRef.key);
             currentRoomRef.child('p1').onDisconnect().set(""); 
-            newRoomRef.on('value', snap => { const v = snap.val(); if (v && v.p2 !== "" && !isHandActive) showVSScreen(v); if (v && isHandActive && v.p2 === "") handleOpponentLeft(); });
+            waitRoomHandler = (snap) => { maybeStartOnlineGame(snap.val()); };
+            currentRoomRef.on('value', waitRoomHandler);
         } else {
             const roomId = lobbySnap.val();
             myRole = "p2"; currentRoomRef = rtdb.ref('rooms/' + roomId);
@@ -600,12 +635,13 @@
             await lobbyRef.remove();
             currentRoomRef.child('p2').onDisconnect().set(""); 
             const snap = await currentRoomRef.get();
-            showVSScreen(snap.val());
-            currentRoomRef.on('value', snap => { const v = snap.val(); if (v && isHandActive && v.p1 === "") handleOpponentLeft(); });
+            maybeStartOnlineGame(snap.val());
+            waitRoomHandler = (snap2) => { maybeStartOnlineGame(snap2.val()); };
+            currentRoomRef.on('value', waitRoomHandler);
         }
     }
 
-    async function handleOpponentLeft() { if (!isHandActive) return; currentRoomRef.off(); isAnimating = true; alert("Rakip oyundan ayrıldı! Skorun kaydediliyor."); const f = "skor_online"; try { const userRef = db.collection('ogrenciler').doc(currentUser.id); const docSnap = await userRef.get(); const yeniSkor = (docSnap.data()[f] || 0) + board[6]; await userRef.update({ [f]: yeniSkor }); } catch (e) { console.error(e); } forceReset(); }
+    async function handleOpponentLeft() { if (!isHandActive) return; teardownRoomListeners(); isAnimating = true; alert("Rakip oyundan ayrıldı! Skorun kaydediliyor."); const f = "skor_online"; try { const userRef = db.collection('ogrenciler').doc(currentUser.id); const docSnap = await userRef.get(); const yeniSkor = (docSnap.data()[f] || 0) + board[getMyTreasuryIndex()]; await userRef.update({ [f]: yeniSkor }); } catch (e) { console.error(e); } forceReset(); }
 
     function showVSScreen(data) {
         document.getElementById('waiting-screen').style.display = 'none';
@@ -625,6 +661,7 @@
         enterFullscreen();
         attachRoomListener();
         updateNetworkQualityFromNavigator();
+        updateUI();
     }
 
     function startGame(mode) { gameMode = mode; isHandActive = true; opponentName = (mode === "AI" ? "Bilgisayar" : "Rakip"); document.getElementById('lobby-selection').style.display = 'none'; document.getElementById('game-ui').style.display = 'flex'; document.getElementById('opponent-label').innerText = "Rakip: " + opponentName; document.getElementById('user-label').innerText = "Sen: " + currentUser.ad_soyad; applyBoardFlipIfNeeded(); enterFullscreen(); updateUI(); }
