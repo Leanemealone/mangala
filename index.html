@@ -3,8 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -13,15 +11,12 @@
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
     <style>
-        :root {
-            --vh: 1vh;
-            --board-color: #ffd56b;
-            --pit-color: #6d4c41;
-            --stone-color: #ffffff;
+        :root { 
+            --board-color: #d2b48c; 
+            --pit-color: #5d4037; 
+            --stone-color: #ffffff; 
             --active-color: #ffeb3b;
-            --bg-gradient: radial-gradient(circle at 20% 15%, #66e6ff, #4a90e2 42%, #5e60ce);
-            --board-unit: clamp(42px, 8.6vmin, 82px);
-            --board-gap: clamp(4px, 1vmin, 12px);
+            --bg-gradient: radial-gradient(circle, #2c3e50, #1a252f);
         }
 
         body { 
@@ -29,10 +24,10 @@
             flex-direction: column; 
             align-items: center; 
             background: var(--bg-gradient); 
-            font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             color: white; 
             margin: 0; 
-            padding: calc(env(safe-area-inset-top, 0px) + 6px) calc(env(safe-area-inset-right, 0px) + 6px) calc(env(safe-area-inset-bottom, 0px) + 6px) calc(env(safe-area-inset-left, 0px) + 6px);
+            padding: 5px; 
             overflow: hidden; 
             touch-action: none; 
         }
@@ -52,7 +47,7 @@
         }
 
         .auth-card { 
-            background: linear-gradient(145deg, #3a4f8f, #4a6bd6);
+            background: linear-gradient(145deg, #34495e, #2c3e50); 
             padding: 30px; 
             border-radius: 25px; 
             text-align: center; 
@@ -61,21 +56,8 @@
             box-shadow: 0 20px 50px rgba(0,0,0,0.5);
             border: 1px solid #546e7a;
         }
-        #online-count-box {
-            margin: 8px 0 6px;
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255, 241, 118, 0.75);
-            border-radius: 12px;
-            padding: 8px 10px;
-            font-size: 0.9rem;
-            font-weight: 800;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-        }
 
-        h2 { color: #fff176; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        h2 { color: #ffd54f; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
 
         select, input { 
             width: 100%; 
@@ -104,12 +86,12 @@
             margin: 8px;
         }
 
-        .btn-green {
-            background: #31c978;
-            box-shadow: 0 5px #1f9d5b;
+        .btn-green { 
+            background: #27ae60; 
+            box-shadow: 0 5px #1e8449;
         }
-        .btn-green:hover { background: #45de8a; transform: translateY(-2px); }
-        .btn-green:active { transform: translateY(2px); box-shadow: 0 2px #1f9d5b; }
+        .btn-green:hover { background: #2ecc71; transform: translateY(-2px); }
+        .btn-green:active { transform: translateY(2px); box-shadow: 0 2px #1e8449; }
 
         .btn-reset { 
             background: #e74c3c; 
@@ -119,17 +101,17 @@
         .btn-reset:active { transform: translateY(2px); box-shadow: 0 2px #c0392b; }
 
         /* Oyun Alanı */
-        #game-ui { display: none; flex-direction: column; align-items: center; width: 100%; height: calc(var(--vh) * 100); justify-content: center; }
+        #game-ui { display: none; flex-direction: column; align-items: center; width: 100%; height: 100vh; justify-content: center; }
 
         #stats-bar { 
             display: flex; 
             justify-content: space-around; 
-            width: min(900px, 96%);
-            background: rgba(38, 57, 109, 0.82);
+            width: 90%; 
+            background: rgba(52, 73, 94, 0.8); 
             padding: 8px; 
             border-radius: 15px; 
             margin-bottom: 10px; 
-            font-size: clamp(0.8rem, 2.1vw, 1rem);
+            font-size: 0.85rem; 
             border: 1px solid #ffd54f; 
         }
 
@@ -145,19 +127,19 @@
 
         #board { 
             display: grid; 
-            grid-template-columns: repeat(8, var(--board-unit));
-            gap: var(--board-gap);
-            background: linear-gradient(145deg, #ffd77a, #ffb84d);
-            padding: clamp(10px, 1.7vmin, 18px) clamp(8px, 1.2vmin, 12px);
+            grid-template-columns: repeat(8, 9.5vw); 
+            gap: 1.2vw; 
+            background: url('https://www.transparenttextures.com/patterns/wood-pattern.png'), var(--board-color); 
+            padding: 20px 10px; 
             border-radius: 20px; 
             box-shadow: 0 15px 40px rgba(0,0,0,0.7); 
-            border: clamp(3px, 0.7vmin, 6px) solid #5d4037;
+            border: 6px solid #5d4037; 
             position: relative; 
             max-width: 98vw; 
         }
 
         .pit { 
-            width: var(--board-unit); height: var(--board-unit);
+            width: 9.5vw; height: 9.5vw; 
             background: var(--pit-color); 
             border-radius: 50%; 
             display: flex; flex-wrap: wrap; 
@@ -167,7 +149,7 @@
             transition: 0.3s; 
         }
 
-        .treasury { grid-row: span 2; height: calc(var(--board-unit) * 2 + var(--board-gap)); border-radius: 25px; }
+        .treasury { grid-row: span 2; height: 21vw; border-radius: 25px; }
 
         .active-pit { 
             box-shadow: inset 2px 2px 8px rgba(0,0,0,0.5), 0 0 20px var(--active-color); 
@@ -176,9 +158,9 @@
         }
 
         /* Taşlar */
-        .stone {
-            width: clamp(7px, 1.45vmin, 14px); height: clamp(7px, 1.45vmin, 14px);
-            background: radial-gradient(circle at 30% 30%, #ffffff, #d7f2ff);
+        .stone { 
+            width: 1.6vw; height: 1.6vw; 
+            background: radial-gradient(circle at 30% 30%, #ffffff, #bdc3c7); 
             border-radius: 50%; 
             margin: 1px; 
             box-shadow: 1px 1px 2px rgba(0,0,0,0.4);
@@ -191,28 +173,7 @@
         #vs-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #1e3c72, #2a5298); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 25000; }
         .vs-player { font-size: 3rem; color: #ffd54f; font-weight: 900; text-shadow: 4px 4px 0px #000; margin: 15px; }
 
-        #fullscreen-helper {
-            position: fixed;
-            right: calc(env(safe-area-inset-right, 0px) + 10px);
-            bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
-            z-index: 31000;
-            display: none;
-        }
-
-        @media (orientation: portrait) {
-            #game-ui::before {
-                content: "🔄 Daha iyi deneyim için telefonu yan çevir";
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background: rgba(24, 36, 68, 0.95); z-index: 30000;
-                display: flex; justify-content: center; align-items: center;
-                font-weight: bold; text-align: center; padding: 20px; box-sizing: border-box;
-            }
-            #fullscreen-helper { display: block; }
-        }
-
-        @media (max-width: 900px) {
-            :root { --board-unit: clamp(48px, 9.4vmin, 86px); }
-        }
+        @media (orientation: portrait) { #game-ui::before { content: "🔄 Lütfen Telefonu Yan Çevirin!"; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; z-index: 30000; display: flex; justify-content: center; align-items: center; font-weight: bold; } }
     </style>
 </head>
 <body>
@@ -227,10 +188,6 @@
     <div id="auth-overlay">
         <div class="auth-card">
             <h2>Mangala Giriş</h2>
-            <div id="online-count-box">
-                <span>🟢 Çevrimiçi Oyuncu</span>
-                <span id="online-count-value">0</span>
-            </div>
             <select id="student-list" onchange="showStudentScores()">
                 <option value="">İsmini Seç...</option>
             </select>
@@ -279,7 +236,6 @@
         </div>
         <button class="btn btn-reset" onclick="forceReset()">Menüye Dön</button>
     </div>
-    <button id="fullscreen-helper" class="btn btn-green" onclick="enterFullscreen()">Tam Ekran</button>
 
 <script>
     const firebaseConfig = { apiKey: "AIzaSyDcsk1VzI78PnMYeGvvY9CoLoiLxXl-4VQ", projectId: "mangala-a967f", databaseURL: "https://mangala-a967f-default-rtdb.europe-west1.firebasedatabase.app", appId: "1:501041787727:web:f6a56b97c4415397078b3a" };
@@ -299,38 +255,9 @@
     let isHandActive = false;
     let lastProcessedMoveTs = 0;
     let studentsData = {};
-    const sessionId = "sess_" + Math.random().toString(36).slice(2) + Date.now();
-
-    function setViewportHeightVar() {
-        const vh = window.innerHeight * 0.01;
-        document.documentElement.style.setProperty('--vh', `${vh}px`);
-    }
-    function enterFullscreen() {
-        const root = document.documentElement;
-        const request = root.requestFullscreen || root.webkitRequestFullscreen || root.msRequestFullscreen;
-        if (request) {
-            const result = request.call(root);
-            if (result && typeof result.catch === "function") result.catch(() => {});
-        }
-    }
 
     function updateHandPos(e) { if (!isHandActive) return; const hand = document.getElementById('hand'); let x = (e.type.includes('touch')) ? e.touches[0].clientX : e.clientX; let y = (e.type.includes('touch')) ? e.touches[0].clientY : e.clientY; hand.style.display = "block"; hand.style.left = (x - 20) + 'px'; hand.style.top = (y - 20) + 'px'; }
     window.addEventListener('mousemove', updateHandPos); window.addEventListener('touchstart', updateHandPos); window.addEventListener('touchmove', updateHandPos);
-    window.addEventListener('resize', setViewportHeightVar);
-    window.addEventListener('orientationchange', () => setTimeout(() => {
-        setViewportHeightVar();
-        if (window.innerWidth > window.innerHeight) enterFullscreen();
-    }, 180));
-    setViewportHeightVar();
-
-    const presenceRef = rtdb.ref('presence_sessions/' + sessionId);
-    presenceRef.set({ active: true, ts: Date.now() });
-    presenceRef.onDisconnect().remove();
-    rtdb.ref('presence_sessions').on('value', snap => {
-        const count = snap.exists() ? Object.keys(snap.val()).length : 0;
-        const countEl = document.getElementById('online-count-value');
-        if (countEl) countEl.innerText = String(count);
-    });
 
     async function loadStudents() { try { const select = document.getElementById('student-list'); const snapshot = await db.collection('ogrenciler').get(); select.innerHTML = '<option value="">İsmini Seç...</option>'; snapshot.forEach(doc => { studentsData[doc.id] = doc.data(); let opt = document.createElement('option'); opt.value = doc.id; opt.textContent = doc.data().ad_soyad; select.appendChild(opt); }); } catch (e) { console.error(e); } }
     loadStudents();
@@ -377,7 +304,6 @@
 
     function setupUI(data) {
         isHandActive = true; document.getElementById('game-ui').style.display = 'flex'; document.body.classList.add('game-active');
-        enterFullscreen();
         opponentName = (myRole === "p1" ? data.p2 : data.p1);
         document.getElementById('opponent-label').innerText = "Rakip: " + opponentName;
         document.getElementById('user-label').innerText = "Sen: " + currentUser.ad_soyad;
@@ -388,7 +314,7 @@
         });
     }
 
-    function startGame(mode) { gameMode = mode; isHandActive = true; enterFullscreen(); opponentName = (mode === "AI" ? "Bilgisayar" : "Rakip"); document.getElementById('lobby-selection').style.display = 'none'; document.getElementById('game-ui').style.display = 'flex'; document.getElementById('opponent-label').innerText = "Rakip: " + opponentName; document.getElementById('user-label').innerText = "Sen: " + currentUser.ad_soyad; updateUI(); }
+    function startGame(mode) { gameMode = mode; isHandActive = true; opponentName = (mode === "AI" ? "Bilgisayar" : "Rakip"); document.getElementById('lobby-selection').style.display = 'none'; document.getElementById('game-ui').style.display = 'flex'; document.getElementById('opponent-label').innerText = "Rakip: " + opponentName; document.getElementById('user-label').innerText = "Sen: " + currentUser.ad_soyad; updateUI(); }
 
     function updateUI() {
         const ind = document.getElementById('turn-indicator');
