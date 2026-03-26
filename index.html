@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Mangala Online v15.1</title>
+    <title>Mangala Online v15.2</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
@@ -21,7 +21,7 @@
         #result-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: none; justify-content: center; align-items: center; z-index: 32000; padding: 16px; box-sizing: border-box; }
         #result-card { width: min(560px, 92vw); background: linear-gradient(155deg, #4e7bcf, #6b4db8 45%, #2f4f9f); border: 3px solid #ffe082; border-radius: 20px; box-shadow: 0 14px 30px rgba(0,0,0,0.45), 0 0 18px rgba(255, 234, 128, 0.45); text-align: center; padding: 22px 16px; }
         #result-icon { font-size: 2.1rem; margin-bottom: 10px; }
-        #result-text { font-size: 1.4rem; line-height: 1.35; color: #fff; font-weight: 800; text-shadow: 0 2px 6px rgba(0,0,0,0.25); }
+        #result-text { font-size: 1.4rem; line-height: 1.35; color: #fff; font-weight: 800; text-shadow: 0 2px 6px rgba(0,0,0,0.25); white-space: pre-line; }
         #result-actions { display: none; justify-content: center; gap: 10px; margin-top: 16px; }
         #fx-layer { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 31500; }
         .fx-particle { position: absolute; top: -30px; font-size: 20px; animation: fallFx 1700ms linear forwards; }
@@ -80,6 +80,15 @@
         .btn:hover { transform: translateY(-1px) scale(1.02); filter: brightness(1.06); }
         .btn-green { background: linear-gradient(140deg, #32c96f, #22a85b); } .btn-reset { background: linear-gradient(140deg, #ff6a5f, #e74c3c); z-index: 30000; }
         #fullscreen-helper { position: fixed; right: 10px; bottom: 10px; z-index: 31000; }
+        #teacher-mini-panel { position: fixed; left: 10px; bottom: 10px; z-index: 30950; width: min(320px, 86vw); background: rgba(34, 50, 66, 0.92); border: 1px solid rgba(255,255,255,0.22); border-radius: 14px; padding: 10px; box-shadow: 0 8px 18px rgba(0,0,0,0.35); font-size: 0.82rem; }
+        #teacher-mini-title { font-size: 0.92rem; font-weight: 800; color: #ffe082; margin-bottom: 5px; }
+        .teacher-mini-row { display: flex; justify-content: space-between; margin: 2px 0; }
+        #teacher-online-names { margin-top: 6px; color: #dff7ff; min-height: 16px; line-height: 1.3; }
+        #onboarding-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; justify-content: center; align-items: center; z-index: 32100; padding: 16px; box-sizing: border-box; }
+        #onboarding-card { width: min(520px, 92vw); background: linear-gradient(165deg, #4b6fa8, #365a8f); border: 2px solid #ffe082; border-radius: 18px; padding: 18px 14px; text-align: center; box-shadow: 0 12px 26px rgba(0,0,0,0.35); }
+        #onboarding-step { font-size: 0.95rem; color: #ffe082; font-weight: 700; margin-bottom: 8px; }
+        #onboarding-text { font-size: 1.15rem; font-weight: 700; line-height: 1.35; }
+        #onboarding-actions { margin-top: 14px; display: flex; justify-content: center; gap: 8px; }
 
         @media (orientation: portrait) { #game-ui::before { content: "🔄 Lütfen Telefonu Yan Çevirin!"; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; z-index: 30000; display: flex; justify-content: center; align-items: center; font-weight: bold; } }
     </style>
@@ -97,6 +106,16 @@
         </div>
     </div>
     <div id="fx-layer"></div>
+    <div id="onboarding-overlay">
+        <div id="onboarding-card">
+            <div id="onboarding-step">Adım 1/3</div>
+            <div id="onboarding-text"></div>
+            <div id="onboarding-actions">
+                <button id="onboarding-skip-btn" class="btn btn-reset">Atla</button>
+                <button id="onboarding-next-btn" class="btn btn-green">Devam</button>
+            </div>
+        </div>
+    </div>
     <div id="vs-screen"><div id="p1-vs" class="vs-player"></div><img id="vs-custom-img" src="https://raw.githubusercontent.com/Leanemealone/mangala/refs/heads/main/vs.png" alt="VS"><div id="p2-vs" class="vs-player"></div></div>
     
     <div id="auth-overlay">
@@ -143,6 +162,13 @@
         <button class="btn btn-reset" onclick="forceReset()">Menüye Dön</button>
     </div>
     <button id="fullscreen-helper" class="btn btn-green" onclick="enterFullscreen()">Tam Ekran</button>
+    <div id="teacher-mini-panel">
+        <div id="teacher-mini-title">Sinif Canli Durum</div>
+        <div class="teacher-mini-row"><span>Online:</span><strong id="tm-online">0</strong></div>
+        <div class="teacher-mini-row"><span>Macta:</span><strong id="tm-playing">0</strong></div>
+        <div class="teacher-mini-row"><span>Biten Mac:</span><strong id="tm-finished">0</strong></div>
+        <div id="teacher-online-names">Oyuncular: -</div>
+    </div>
 
 <script>
     const firebaseConfig = { apiKey: "AIzaSyDcsk1VzI78PnMYeGvvY9CoLoiLxXl-4VQ", projectId: "mangala-a967f", databaseURL: "https://mangala-a967f-default-rtdb.europe-west1.firebasedatabase.app", appId: "1:501041787727:web:f6a56b97c4415397078b3a" };
@@ -164,6 +190,9 @@
     let gameFinished = false;
     let resultBoxTimer = null;
     let resultBoxResolver = null;
+    let turnStartedAt = 0;
+    let matchStats = null;
+    let lastPresenceSnapshot = null;
     let studentsData = {};
     const sessionId = "sess_" + Math.random().toString(36).slice(2) + Date.now();
     const audioCtx = window.AudioContext ? new AudioContext() : null;
@@ -185,6 +214,111 @@
     window.addEventListener('mousemove', updateHandPos); 
     window.addEventListener('touchstart', updateHandPos); 
     window.addEventListener('touchmove', updateHandPos);
+
+    function getPlayerNames() {
+        const p1Name = (gameMode === "ONLINE" && myRole === "p2") ? opponentName : currentUser.ad_soyad;
+        const p2Name = (gameMode === "ONLINE" && myRole === "p2") ? currentUser.ad_soyad : opponentName;
+        return { p1Name, p2Name };
+    }
+
+    function resetMatchStats() {
+        const names = getPlayerNames();
+        matchStats = {
+            moves: {},
+            fastest: { player: "", ms: Number.POSITIVE_INFINITY },
+            bestGain: { player: "", stones: 0 },
+            names: names
+        };
+        matchStats.moves[names.p1Name] = { count: 0, totalMs: 0 };
+        matchStats.moves[names.p2Name] = { count: 0, totalMs: 0 };
+        turnStartedAt = Date.now();
+    }
+
+    function ensurePlayerInStats(name) {
+        if (!matchStats) resetMatchStats();
+        if (!matchStats.moves[name]) matchStats.moves[name] = { count: 0, totalMs: 0 };
+    }
+
+    function recordMoveStats(playerName, gainedStones) {
+        ensurePlayerInStats(playerName);
+        const elapsed = Math.max(0, Date.now() - turnStartedAt);
+        matchStats.moves[playerName].count += 1;
+        matchStats.moves[playerName].totalMs += elapsed;
+        if (elapsed > 0 && elapsed < matchStats.fastest.ms) {
+            matchStats.fastest = { player: playerName, ms: elapsed };
+        }
+        if (gainedStones > matchStats.bestGain.stones) {
+            matchStats.bestGain = { player: playerName, stones: gainedStones };
+        }
+        turnStartedAt = Date.now();
+    }
+
+    function buildMatchSummary(winnerText) {
+        if (!matchStats) return "";
+        const fastest = matchStats.fastest.ms === Number.POSITIVE_INFINITY
+            ? "En hizli hamle: -"
+            : "En hizli hamle: " + matchStats.fastest.player + " (" + (matchStats.fastest.ms / 1000).toFixed(1) + " sn)";
+        const bestGain = matchStats.bestGain.stones > 0
+            ? "En cok tas: " + matchStats.bestGain.player + " (+" + matchStats.bestGain.stones + ")"
+            : "En cok tas: -";
+        let starName = "";
+        if (winnerText && winnerText.includes("kazandı")) {
+            starName = winnerText.replace(" kazandı", "");
+        } else if (matchStats.fastest.player) {
+            starName = matchStats.fastest.player;
+        } else {
+            starName = currentUser ? currentUser.ad_soyad : "Bugunun Oyuncusu";
+        }
+        return fastest + "\n" + bestGain + "\nBugunun yildizi: " + starName;
+    }
+
+    function updateTeacherPanelFromPresence(presenceData) {
+        const online = presenceData ? Object.values(presenceData) : [];
+        const names = online
+            .map(v => v && v.userName ? v.userName : "")
+            .filter(Boolean)
+            .slice(0, 8);
+        const onlineEl = document.getElementById('tm-online');
+        const namesEl = document.getElementById('teacher-online-names');
+        if (onlineEl) onlineEl.innerText = String(online.length);
+        if (namesEl) namesEl.innerText = "Oyuncular: " + (names.length ? names.join(", ") : "-");
+    }
+
+    function showOnboardingIfNeeded() {
+        if (!currentUser) return;
+        const key = "mangala_tour_seen_" + currentUser.id;
+        if (localStorage.getItem(key) === "1") return;
+        const overlay = document.getElementById('onboarding-overlay');
+        const stepEl = document.getElementById('onboarding-step');
+        const textEl = document.getElementById('onboarding-text');
+        const nextBtn = document.getElementById('onboarding-next-btn');
+        const skipBtn = document.getElementById('onboarding-skip-btn');
+        if (!overlay || !stepEl || !textEl || !nextBtn || !skipBtn) return;
+        const steps = [
+            "Kendi tarafindaki dolu kuyulardan birine dokunarak hamle yap.",
+            "Her hamlede taslar saga dogru dagilir. Hazinene gelen taslar puandir.",
+            "Oyun bitince sonucu gor, istersen tekrar oyna veya menuye don."
+        ];
+        let idx = 0;
+        const render = () => {
+            stepEl.innerText = "Adim " + (idx + 1) + "/" + steps.length;
+            textEl.innerText = steps[idx];
+            nextBtn.innerText = idx === steps.length - 1 ? "Basla" : "Devam";
+        };
+        const close = () => {
+            overlay.style.display = 'none';
+            localStorage.setItem(key, "1");
+        };
+        nextBtn.onclick = () => {
+            if (idx < steps.length - 1) {
+                idx++;
+                render();
+            } else close();
+        };
+        skipBtn.onclick = close;
+        render();
+        overlay.style.display = 'flex';
+    }
 
     function getBadgeLabel(totalScore) {
         if (totalScore >= 800) return "Sampiyon";
@@ -330,12 +464,39 @@
     loadStudents();
 
     const presenceRef = rtdb.ref('presence_sessions/' + sessionId);
-    presenceRef.set({ active: true, ts: Date.now() });
+    function updatePresenceState(state) {
+        const payload = {
+            active: true,
+            ts: Date.now(),
+            state: state || "auth",
+            userId: currentUser ? currentUser.id : "",
+            userName: currentUser ? currentUser.ad_soyad : ""
+        };
+        presenceRef.set(payload).catch(() => {});
+    }
+    updatePresenceState("auth");
     presenceRef.onDisconnect().remove();
     rtdb.ref('presence_sessions').on('value', snap => {
-        const count = snap.exists() ? Object.keys(snap.val()).length : 0;
+        const val = snap.exists() ? snap.val() : {};
+        lastPresenceSnapshot = val;
+        const count = val ? Object.keys(val).length : 0;
         const el = document.getElementById('online-count-value');
         if (el) el.innerText = String(count);
+        updateTeacherPanelFromPresence(val);
+    });
+    rtdb.ref('rooms').on('value', snap => {
+        const rooms = snap.exists() ? Object.values(snap.val()) : [];
+        let playing = 0;
+        let finished = 0;
+        rooms.forEach(r => {
+            if (!r || !r.p1 || !r.p2) return;
+            if (r.gameOver) finished++;
+            else playing++;
+        });
+        const playingEl = document.getElementById('tm-playing');
+        const finishedEl = document.getElementById('tm-finished');
+        if (playingEl) playingEl.innerText = String(playing);
+        if (finishedEl) finishedEl.innerText = String(finished);
     });
 
     function showStudentScores() { 
@@ -353,9 +514,11 @@
         const pass = document.getElementById('password').value;
         if (!id || studentsData[id].sifre !== pass) return alert("Hatalı!"); 
         currentUser = { id, ...studentsData[id] }; 
+        updatePresenceState("lobby");
         document.getElementById('auth-overlay').style.display = 'none'; 
         document.getElementById('lobby-selection').style.display = 'flex';
         document.getElementById('display-name').innerText = currentUser.ad_soyad; 
+        showOnboardingIfNeeded();
     }
 
     function returnToLobbyUI() {
@@ -369,6 +532,8 @@
         isHandActive = false;
         gameFinished = false;
         lastProcessedMoveTs = 0;
+        turnStartedAt = 0;
+        matchStats = null;
 
         const overlay = document.getElementById('result-overlay');
         if (overlay) overlay.style.display = 'none';
@@ -383,6 +548,7 @@
         document.body.classList.remove('game-active');
         updateUI();
         updateUserLabel();
+        updatePresenceState("lobby");
     }
 
     async function forceReset() { 
@@ -413,6 +579,8 @@
 
     async function startOnlineMode() {
         gameMode = "ONLINE";
+        resetMatchStats();
+        updatePresenceState("matching");
         document.getElementById('lobby-selection').style.display = 'none';
         document.getElementById('waiting-screen').style.display = 'flex';
         const lobbyRef = rtdb.ref('lobby');
@@ -542,6 +710,8 @@
 
     function setupUI(data) {
         isHandActive = true;
+        updatePresenceState("in_match");
+        if (!matchStats) resetMatchStats();
         document.getElementById('game-ui').style.display = 'flex'; 
         document.body.classList.add('game-active');
         opponentName = (myRole === "p1" ? data.p2 : data.p1);
@@ -560,7 +730,8 @@
                     playEndJingle(isDraw);
                     createFxBurst(isDraw ? "draw" : "win");
                     if (val.winnerText) {
-                        const choice = await showResultBox("Bitti! " + val.winnerText, {
+                        const summaryText = val.summaryText ? ("\n\n" + val.summaryText) : "";
+                        const choice = await showResultBox("Bitti! " + val.winnerText + summaryText, {
                             type: isDraw ? "draw" : "win",
                             withActions: true
                         });
@@ -569,6 +740,8 @@
                             isPlayer1Turn = true;
                             isAnimating = false;
                             gameFinished = false;
+                            resetMatchStats();
+                            updatePresenceState("ai_match");
                             updateUI();
                             return;
                         }
@@ -586,6 +759,8 @@
 
     function startGame(mode) { 
         gameMode = mode; isHandActive = true;
+        resetMatchStats();
+        updatePresenceState(mode === "AI" ? "ai_match" : "in_match");
         opponentName = (mode === "AI" ? "Bilgisayar" : "Rakip"); 
         document.getElementById('lobby-selection').style.display = 'none'; 
         document.getElementById('game-ui').style.display = 'flex'; 
@@ -639,6 +814,10 @@
     }
 
     async function play(index) { 
+        const moverWasP1 = isPlayer1Turn;
+        const names = getPlayerNames();
+        const moverName = moverWasP1 ? names.p1Name : names.p2Name;
+        const beforeTreasury = moverWasP1 ? board[6] : board[13];
         isAnimating = true; let stones = board[index]; board[index] = 0;
         clickSound.currentTime = 0; clickSound.play().catch(()=>{}); 
         updateUI(); await new Promise(r => setTimeout(r, 400)); 
@@ -656,6 +835,8 @@
                 updateUI(); animateLastStoneInPit(cur); triggerTreasurySparkle(cur); await new Promise(r => setTimeout(r, 400));
             } 
         } 
+        const afterTreasury = moverWasP1 ? board[6] : board[13];
+        recordMoveStats(moverName, Math.max(0, afterTreasury - beforeTreasury));
         checkRules(cur); isAnimating = false; await checkGameOver(); updateUI(); 
     }
 
@@ -696,6 +877,8 @@
             if (board[6] > board[13]) winnerText = p1Name + " kazandı";
             else if (board[13] > board[6]) winnerText = p2Name + " kazandı";
             const isDraw = winnerText.includes("Berabere");
+            const summaryText = buildMatchSummary(winnerText);
+            updatePresenceState("finished");
             if (gameMode === "ONLINE" && currentRoomRef) {
                 try {
                     await currentRoomRef.update({
@@ -703,6 +886,7 @@
                         turn: isPlayer1Turn ? "p1" : "p2",
                         gameOver: true,
                         winnerText: winnerText,
+                        summaryText: summaryText,
                         ts: Date.now()
                     });
                 } catch (e) { console.error(e); }
@@ -716,7 +900,7 @@
                 currentUser[f] = yeniSkor;
                 playEndJingle(isDraw);
                 createFxBurst(isDraw ? "draw" : "win");
-                const choice = await showResultBox("Bitti! " + winnerText + " | Skor: " + yeniSkor, {
+                const choice = await showResultBox("Bitti! " + winnerText + " | Skor: " + yeniSkor + "\n\n" + summaryText, {
                     type: isDraw ? "draw" : "win",
                     withActions: true
                 });
@@ -725,6 +909,8 @@
                     isPlayer1Turn = true;
                     isAnimating = false;
                     gameFinished = false;
+                    resetMatchStats();
+                    updatePresenceState("ai_match");
                     updateUserLabel();
                     updateUI();
                     return;
