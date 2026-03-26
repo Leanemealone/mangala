@@ -115,6 +115,7 @@
     let isAnimating = false;
     let isHandActive = false;
     let lastProcessedMoveTs = 0;
+    let gameFinished = false;
     let studentsData = {};
     const sessionId = "sess_" + Math.random().toString(36).slice(2) + Date.now();
 
@@ -180,8 +181,25 @@
         document.getElementById('display-name').innerText = currentUser.ad_soyad; 
     }
 
-    function forceReset() { 
-        if (typeof currentRoomRef !== 'undefined' && currentRoomRef !== null) currentRoomRef.off();
+    async function forceReset() { 
+        if (typeof currentRoomRef !== 'undefined' && currentRoomRef !== null) {
+            currentRoomRef.off();
+            if (gameMode === "ONLINE" && myRole && !gameFinished) {
+                try {
+                    const roomKey = currentRoomRef.key;
+                    await currentRoomRef.update({
+                        [myRole]: "",
+                        leftBy: myRole,
+                        leftReason: "quit",
+                        leftAt: Date.now()
+                    });
+                    if (myRole === "p1" && roomKey) {
+                        const lobbyRef = rtdb.ref('lobby');
+                        await lobbyRef.transaction(cur => (cur === roomKey ? null : cur));
+                    }
+                } catch (e) { console.error(e); }
+            }
+        }
         window.location.replace(window.location.pathname); 
     }
 
@@ -216,14 +234,18 @@
                         turn: "p1",
                         lastMove: -1,
                         lastPlayer: "",
-                        ts: 0
+                        ts: 0,
+                        gameOver: false,
+                        winnerText: "",
+                        leftBy: "",
+                        leftReason: "",
+                        leftAt: 0
                     });
                     await lobbyRef.set(newRoomRef.key);
-                    currentRoomRef.child('p1').onDisconnect().set("");
                     newRoomRef.on('value', snap => {
                         const v = snap.val();
                         if (v && v.p2 !== "" && !isHandActive) showVSScreen(v);
-                        if (v && isHandActive && v.p2 === "") handleOpponentLeft();
+                        if (v && isHandActive && !v.gameOver && v.leftBy === "p2" && v.leftReason === "quit") handleOpponentLeft();
                     });
                     return;
                 } catch (e) {
@@ -252,11 +274,10 @@
                     myRole = "p2";
                     currentRoomRef = roomRef;
                     await lobbyRef.transaction(cur => (cur === roomId ? null : cur));
-                    currentRoomRef.child('p2').onDisconnect().set("");
                     showVSScreen(joinedRoom);
                     currentRoomRef.on('value', snap => {
                         const v = snap.val();
-                        if (v && isHandActive && v.p1 === "") handleOpponentLeft();
+                        if (v && isHandActive && !v.gameOver && v.leftBy === "p1" && v.leftReason === "quit") handleOpponentLeft();
                     });
                     return;
                 }
@@ -288,9 +309,10 @@
     }
 
     async function handleOpponentLeft() {
-        if (!isHandActive) return;
+        if (!isHandActive || gameFinished) return;
+        gameFinished = true;
         currentRoomRef.off(); isAnimating = true;
-        alert("Rakip oyundan ayrıldı! Skorun kaydediliyor ve menüye dönülüyor.");
+        alert("Rakip oyundan çıktı! Skorun kaydediliyor ve menüye dönülüyor.");
         try {
             const userRef = db.collection('ogrenciler').doc(currentUser.id);
             const docSnap = await userRef.get();
@@ -318,6 +340,18 @@
         document.getElementById('user-label').innerText = "Sen: " + currentUser.ad_soyad;
         currentRoomRef.on('value', async snap => {
             const val = snap.val(); if(!val) return;
+            if (val.gameOver) {
+                if (!gameFinished) {
+                    gameFinished = true;
+                    isAnimating = true;
+                    board = [...val.board];
+                    isPlayer1Turn = (val.turn === "p1");
+                    updateUI();
+                    if (val.winnerText) alert("Bitti! " + val.winnerText);
+                    forceReset();
+                }
+                return;
+            }
             if (val.lastPlayer !== "" && val.lastPlayer !== myRole && val.ts > lastProcessedMoveTs) { 
                 lastProcessedMoveTs = val.ts; await play(val.lastMove); 
             }
@@ -425,6 +459,7 @@
 
     async function checkGameOver() { 
         if (board.slice(0, 6).every(v => v === 0) || board.slice(7, 13).every(v => v === 0)) { 
+            gameFinished = true;
             isAnimating = true;
             for (let i = 0; i < 6; i++) { board[6] += board[i]; board[i] = 0; } 
             for (let i = 7; i < 13; i++) { board[13] += board[i]; board[i] = 0; } 
@@ -434,14 +469,25 @@
             let winnerText = "Berabere";
             if (board[6] > board[13]) winnerText = p1Name + " kazandı";
             else if (board[13] > board[6]) winnerText = p2Name + " kazandı";
+            if (gameMode === "ONLINE" && currentRoomRef) {
+                try {
+                    await currentRoomRef.update({
+                        board: board,
+                        turn: isPlayer1Turn ? "p1" : "p2",
+                        gameOver: true,
+                        winnerText: winnerText,
+                        ts: Date.now()
+                    });
+                } catch (e) { console.error(e); }
+            }
             const f = (gameMode === "AI") ? "skor_ai" : "skor_online"; 
             try { 
                 const userRef = db.collection('ogrenciler').doc(currentUser.id);
                 const docSnap = await userRef.get(); 
                 const yeniSkor = (docSnap.data()[f] || 0) + board[6]; 
                 await userRef.update({ [f]: yeniSkor });
-                alert("Bitti! " + winnerText + " | Skor: " + yeniSkor); forceReset(); 
-            } catch (e) { console.error(e); forceReset(); } 
+                alert("Bitti! " + winnerText + " | Skor: " + yeniSkor); await forceReset(); 
+            } catch (e) { console.error(e); await forceReset(); } 
         } 
     }
 </script>
