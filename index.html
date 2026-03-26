@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Mangala Online v15.3</title>
+    <title>Mangala Online v14.6</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
@@ -239,9 +239,12 @@
     let turnStartedAt = 0;
     let matchStats = null;
     let lastPresenceSnapshot = null;
+    let currentPresenceState = "auth";
     let studentsData = {};
     const sessionId = "sess_" + Math.random().toString(36).slice(2) + Date.now();
     const audioCtx = window.AudioContext ? new AudioContext() : null;
+    const PRESENCE_TTL_MS = 45000;
+    const PRESENCE_HEARTBEAT_MS = 15000;
 
     function enterFullscreen() {
         const root = document.documentElement;
@@ -516,11 +519,15 @@
     loadStudents();
 
     const presenceRef = rtdb.ref('presence_sessions/' + sessionId);
+    function isPresenceFresh(session) {
+        return !!(session && typeof session.ts === "number" && (Date.now() - session.ts) <= PRESENCE_TTL_MS);
+    }
     function updatePresenceState(state) {
+        currentPresenceState = state || currentPresenceState || "auth";
         const payload = {
             active: true,
             ts: Date.now(),
-            state: state || "auth",
+            state: currentPresenceState || "auth",
             userId: currentUser ? currentUser.id : "",
             userName: currentUser ? currentUser.ad_soyad : ""
         };
@@ -528,10 +535,21 @@
     }
     updatePresenceState("auth");
     presenceRef.onDisconnect().remove();
+    setInterval(() => updatePresenceState(currentPresenceState), PRESENCE_HEARTBEAT_MS);
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) updatePresenceState(currentPresenceState);
+    });
+    window.addEventListener('beforeunload', () => {
+        presenceRef.remove().catch(() => {});
+    });
     rtdb.ref('presence_sessions').on('value', snap => {
-        const val = snap.exists() ? snap.val() : {};
+        const raw = snap.exists() ? snap.val() : {};
+        const val = {};
+        Object.entries(raw || {}).forEach(([k, v]) => {
+            if (isPresenceFresh(v)) val[k] = v;
+        });
         lastPresenceSnapshot = val;
-        const count = val ? Object.keys(val).length : 0;
+        const count = Object.keys(val).length;
         const el = document.getElementById('online-count-value');
         if (el) el.innerText = String(count);
         updateTeacherPanelFromPresence(val);
@@ -561,7 +579,17 @@
                 .get();
             if (sameUserSessionsSnap.exists()) {
                 const sessions = sameUserSessionsSnap.val() || {};
-                const hasOtherActiveSession = Object.keys(sessions).some(k => k !== sessionId);
+                const staleRemovals = [];
+                let hasOtherActiveSession = false;
+                Object.entries(sessions).forEach(([k, v]) => {
+                    if (k === sessionId) return;
+                    if (!isPresenceFresh(v)) {
+                        staleRemovals.push(rtdb.ref('presence_sessions/' + k).remove().catch(() => {}));
+                        return;
+                    }
+                    hasOtherActiveSession = true;
+                });
+                if (staleRemovals.length) await Promise.all(staleRemovals);
                 if (hasOtherActiveSession) {
                     await showResultBox("Bu hesap başka bir cihazda açık görünüyor.\nLütfen önce diğer cihazdan çıkış yap.", { type: "error", autoCloseMs: 2600 });
                     return;
