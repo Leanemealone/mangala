@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Mangala Online v14.8</title>
+    <title>Mangala Online v14.9</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
@@ -338,6 +338,33 @@
         document.getElementById('display-name').innerText = currentUser.ad_soyad; 
     }
 
+    function returnToLobbyUI() {
+        board = [4, 4, 4, 4, 4, 4, 0, 4, 4, 4, 4, 4, 4, 0];
+        isPlayer1Turn = true;
+        opponentName = "Bilgisayar";
+        myRole = "";
+        currentRoomRef = null;
+        gameMode = "";
+        isAnimating = false;
+        isHandActive = false;
+        gameFinished = false;
+        lastProcessedMoveTs = 0;
+
+        const overlay = document.getElementById('result-overlay');
+        if (overlay) overlay.style.display = 'none';
+        const actions = document.getElementById('result-actions');
+        if (actions) actions.style.display = 'none';
+        const waiting = document.getElementById('waiting-screen');
+        if (waiting) waiting.style.display = 'none';
+        const gameUI = document.getElementById('game-ui');
+        if (gameUI) gameUI.style.display = 'none';
+        const lobby = document.getElementById('lobby-selection');
+        if (lobby) lobby.style.display = 'flex';
+        document.body.classList.remove('game-active');
+        updateUI();
+        updateUserLabel();
+    }
+
     async function forceReset() { 
         if (typeof currentRoomRef !== 'undefined' && currentRoomRef !== null) {
             currentRoomRef.off();
@@ -357,7 +384,11 @@
                 } catch (e) { console.error(e); }
             }
         }
-        window.location.replace(window.location.pathname); 
+        if (!currentUser) {
+            window.location.replace(window.location.pathname);
+            return;
+        }
+        returnToLobbyUI();
     }
 
     async function startOnlineMode() {
