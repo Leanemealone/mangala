@@ -6,13 +6,14 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Mangala Online v14.7</title>
+    <title>Mangala Online v14.8</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap');
         :root { --board-color: #8d6e63; --pit-color: #4e342e; --stone-color: #f5f5f5; --active-color: #ffd54f; }
-        body { display: flex; flex-direction: column; align-items: center; background-color: #2c3e50; font-family: 'Segoe UI', sans-serif; color: white; margin: 0; padding: 5px; overflow: hidden; touch-action: none; }
+        body { display: flex; flex-direction: column; align-items: center; background-color: #2c3e50; font-family: 'Baloo 2', 'Segoe UI', sans-serif; color: white; margin: 0; padding: 5px; overflow: hidden; touch-action: none; }
         
         #vs-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #0052d4, #4364f7, #6fb1fc); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 25000; animation: fadeIn 0.8s; }
         .vs-player { font-size: 3.5rem; color: #ffd54f; font-weight: 900; text-transform: uppercase; text-shadow: 4px 4px 0px #4e342e; margin: 10px; text-align: center; width: 90%; font-family: 'Arial Black', sans-serif; }
@@ -20,10 +21,20 @@
         #result-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: none; justify-content: center; align-items: center; z-index: 32000; padding: 16px; box-sizing: border-box; }
         #result-card { width: min(560px, 92vw); background: linear-gradient(160deg, #34495e, #2c3e50); border: 2px solid #ffd54f; border-radius: 18px; box-shadow: 0 12px 28px rgba(0,0,0,0.45); text-align: center; padding: 22px 16px; }
         #result-icon { font-size: 2.1rem; margin-bottom: 10px; }
-        #result-text { font-size: 1.15rem; line-height: 1.4; color: #fff; font-weight: 700; }
+        #result-text { font-size: 1.35rem; line-height: 1.35; color: #fff; font-weight: 800; }
+        #result-actions { display: none; justify-content: center; gap: 10px; margin-top: 16px; }
+        #fx-layer { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 31500; }
+        .fx-particle { position: absolute; top: -30px; font-size: 20px; animation: fallFx 1700ms linear forwards; }
+        .stone-pop { animation: stonePop 260ms ease-out; }
+        .treasury-sparkle { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 18px; pointer-events: none; animation: sparkle 650ms ease-out forwards; }
+        h2, h3, #turn-indicator { font-family: 'Baloo 2', 'Segoe UI', sans-serif; letter-spacing: 0.4px; }
+        #turn-indicator { font-size: 1.2rem !important; }
         
         @keyframes bounceVs { from { transform: scale(1); } to { transform: scale(1.1); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes stonePop { 0% { transform: scale(0.85); } 55% { transform: scale(1.15); } 100% { transform: scale(1); } }
+        @keyframes sparkle { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 30% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); } 100% { opacity: 0; transform: translate(-50%, -60%) scale(1.4); } }
+        @keyframes fallFx { 0% { transform: translateY(-20px) rotate(0deg); opacity: 1; } 100% { transform: translateY(115vh) rotate(360deg); opacity: 0.9; } }
 
         .game-active, .game-active * { cursor: none !important; }
         #hand { position: fixed; width: 60px; height: 60px; background-image: url('https://raw.githubusercontent.com/Leanemealone/assets-images/refs/heads/main/handdd.png'); background-size: contain; background-repeat: no-repeat; z-index: 10001; pointer-events: none; display: none; transform: translate(-10px, -10px); }
@@ -55,7 +66,17 @@
 </head>
 <body>
     <div id="hand"></div>
-    <div id="result-overlay"><div id="result-card"><div id="result-icon">ℹ️</div><div id="result-text"></div></div></div>
+    <div id="result-overlay">
+        <div id="result-card">
+            <div id="result-icon">ℹ️</div>
+            <div id="result-text"></div>
+            <div id="result-actions">
+                <button id="result-replay-btn" class="btn btn-green">Tekrar Oyna</button>
+                <button id="result-menu-btn" class="btn btn-reset">Menüye Dön</button>
+            </div>
+        </div>
+    </div>
+    <div id="fx-layer"></div>
     <div id="vs-screen"><div id="p1-vs" class="vs-player"></div><img id="vs-custom-img" src="https://raw.githubusercontent.com/Leanemealone/mangala/refs/heads/main/vs.png" alt="VS"><div id="p2-vs" class="vs-player"></div></div>
     
     <div id="auth-overlay">
@@ -121,8 +142,11 @@
     let isHandActive = false;
     let lastProcessedMoveTs = 0;
     let gameFinished = false;
+    let resultBoxTimer = null;
+    let resultBoxResolver = null;
     let studentsData = {};
     const sessionId = "sess_" + Math.random().toString(36).slice(2) + Date.now();
+    const audioCtx = window.AudioContext ? new AudioContext() : null;
 
     function enterFullscreen() {
         const root = document.documentElement;
@@ -142,6 +166,83 @@
     window.addEventListener('touchstart', updateHandPos); 
     window.addEventListener('touchmove', updateHandPos);
 
+    function getBadgeLabel(totalScore) {
+        if (totalScore >= 800) return "Sampiyon";
+        if (totalScore >= 350) return "Usta";
+        return "Baslangic";
+    }
+
+    function updateUserLabel() {
+        if (!currentUser) return;
+        const total = (currentUser.skor_ai || 0) + (currentUser.skor_online || 0);
+        const badge = getBadgeLabel(total);
+        document.getElementById('user-label').innerText = "Sen: " + currentUser.ad_soyad + " [" + badge + "]";
+    }
+
+    function playTone(freq, durationMs, type = "sine", gain = 0.04) {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.type = type; osc.frequency.value = freq;
+        g.gain.value = gain;
+        osc.connect(g); g.connect(audioCtx.destination);
+        osc.start();
+        setTimeout(() => osc.stop(), durationMs);
+    }
+
+    function playTurnDing() {
+        playTone(880, 90, "triangle", 0.045);
+    }
+
+    function playEndJingle(isDraw) {
+        if (isDraw) {
+            playTone(660, 120, "sine", 0.035);
+            setTimeout(() => playTone(740, 120, "sine", 0.035), 120);
+            return;
+        }
+        playTone(740, 120, "triangle", 0.04);
+        setTimeout(() => playTone(880, 120, "triangle", 0.04), 120);
+        setTimeout(() => playTone(1046, 170, "triangle", 0.04), 250);
+    }
+
+    function createFxBurst(type) {
+        const layer = document.getElementById('fx-layer');
+        if (!layer) return;
+        const items = type === "draw" ? ["⭐", "✨"] : ["🎉", "✨", "🎊"];
+        const count = type === "draw" ? 26 : 34;
+        for (let i = 0; i < count; i++) {
+            const p = document.createElement('div');
+            p.className = 'fx-particle';
+            p.innerText = items[Math.floor(Math.random() * items.length)];
+            p.style.left = (Math.random() * 100) + "vw";
+            p.style.animationDelay = Math.floor(Math.random() * 300) + "ms";
+            p.style.fontSize = (16 + Math.floor(Math.random() * 10)) + "px";
+            layer.appendChild(p);
+            setTimeout(() => p.remove(), 2200);
+        }
+    }
+
+    function animateLastStoneInPit(pitIndex) {
+        const pit = document.getElementById('pit' + pitIndex);
+        if (!pit) return;
+        const stones = pit.querySelectorAll('.stone');
+        if (!stones.length) return;
+        const st = stones[stones.length - 1];
+        st.classList.add('stone-pop');
+        setTimeout(() => st.classList.remove('stone-pop'), 280);
+    }
+
+    function triggerTreasurySparkle(pitIndex) {
+        if (pitIndex !== 6 && pitIndex !== 13) return;
+        const pit = document.getElementById('pit' + pitIndex);
+        if (!pit) return;
+        const spark = document.createElement('div');
+        spark.className = 'treasury-sparkle';
+        spark.innerText = "✨";
+        pit.appendChild(spark);
+        setTimeout(() => spark.remove(), 700);
+    }
+
     function getResultIcon(message, type = "info") {
         if (type === "win") return "🏆";
         if (type === "draw") return "🤝";
@@ -153,19 +254,43 @@
         return "ℹ️";
     }
 
-    function showResultBox(message, autoCloseMs = 2200, type = "info") {
+    function showResultBox(message, opts = {}) {
+        const autoCloseMs = typeof opts.autoCloseMs === "number" ? opts.autoCloseMs : 2200;
+        const type = opts.type || "info";
+        const withActions = !!opts.withActions;
         const overlay = document.getElementById('result-overlay');
         const icon = document.getElementById('result-icon');
         const text = document.getElementById('result-text');
-        if (!overlay || !text || !icon) return Promise.resolve();
+        const actions = document.getElementById('result-actions');
+        const replayBtn = document.getElementById('result-replay-btn');
+        const menuBtn = document.getElementById('result-menu-btn');
+        if (!overlay || !text || !icon || !actions || !replayBtn || !menuBtn) return Promise.resolve(null);
+        if (resultBoxTimer) { clearTimeout(resultBoxTimer); resultBoxTimer = null; }
+        if (resultBoxResolver) { resultBoxResolver(null); resultBoxResolver = null; }
         icon.innerText = getResultIcon(message, type);
         text.innerText = message;
+        actions.style.display = withActions ? 'flex' : 'none';
         overlay.style.display = 'flex';
         return new Promise(resolve => {
-            setTimeout(() => {
+            resultBoxResolver = resolve;
+            replayBtn.onclick = () => {
                 overlay.style.display = 'none';
-                resolve();
-            }, autoCloseMs);
+                resultBoxResolver = null;
+                resolve("replay");
+            };
+            menuBtn.onclick = () => {
+                overlay.style.display = 'none';
+                resultBoxResolver = null;
+                resolve("menu");
+            };
+            if (!withActions) {
+                resultBoxTimer = setTimeout(() => {
+                    overlay.style.display = 'none';
+                    resultBoxTimer = null;
+                    resultBoxResolver = null;
+                    resolve(null);
+                }, autoCloseMs);
+            }
         });
     }
 
@@ -336,7 +461,7 @@
             await new Promise(r => setTimeout(r, retryDelayMs));
         }
 
-        await showResultBox("Eşleştirme şu anda yapılamadı. Lütfen tekrar deneyin.", 2200, "error");
+        await showResultBox("Eslestirme su an yapilamadi. Lutfen tekrar dene.", { type: "error", autoCloseMs: 2200 });
         await forceReset();
     }
 
@@ -344,12 +469,13 @@
         if (!isHandActive || gameFinished) return;
         gameFinished = true;
         currentRoomRef.off(); isAnimating = true;
-        await showResultBox("Rakip oyundan çıktı! Skorun kaydediliyor ve menüye dönülüyor.", 2200, "leave");
+        await showResultBox("Rakip oyundan cikti. Skor kaydediliyor.", { type: "leave", autoCloseMs: 2200 });
         try {
             const userRef = db.collection('ogrenciler').doc(currentUser.id);
             const docSnap = await userRef.get();
             const yeniSkor = (docSnap.data()["skor_online"] || 0) + board[6];
             await userRef.update({ ["skor_online"]: yeniSkor });
+            currentUser.skor_online = yeniSkor;
         } catch (e) { console.error(e); }
         await forceReset();
     }
@@ -369,7 +495,7 @@
         document.body.classList.add('game-active');
         opponentName = (myRole === "p1" ? data.p2 : data.p1);
         document.getElementById('opponent-label').innerText = "Rakip: " + opponentName;
-        document.getElementById('user-label').innerText = "Sen: " + currentUser.ad_soyad;
+        updateUserLabel();
         currentRoomRef.on('value', async snap => {
             const val = snap.val(); if(!val) return;
             if (val.gameOver) {
@@ -379,11 +505,23 @@
                     board = [...val.board];
                     isPlayer1Turn = (val.turn === "p1");
                     updateUI();
-                    if (val.winnerText) await showResultBox(
-                        "Bitti! " + val.winnerText,
-                        2200,
-                        val.winnerText.includes("Berabere") ? "draw" : "win"
-                    );
+                    const isDraw = !!(val.winnerText && val.winnerText.includes("Berabere"));
+                    playEndJingle(isDraw);
+                    createFxBurst(isDraw ? "draw" : "win");
+                    if (val.winnerText) {
+                        const choice = await showResultBox("Bitti! " + val.winnerText, {
+                            type: isDraw ? "draw" : "win",
+                            withActions: true
+                        });
+                        if (choice === "replay" && gameMode === "AI") {
+                            board = [4, 4, 4, 4, 4, 4, 0, 4, 4, 4, 4, 4, 4, 0];
+                            isPlayer1Turn = true;
+                            isAnimating = false;
+                            gameFinished = false;
+                            updateUI();
+                            return;
+                        }
+                    }
                     await forceReset();
                 }
                 return;
@@ -402,7 +540,7 @@
         document.getElementById('game-ui').style.display = 'flex'; 
         document.body.classList.add('game-active');
         document.getElementById('opponent-label').innerText = "Rakip: " + opponentName; 
-        document.getElementById('user-label').innerText = "Sen: " + currentUser.ad_soyad; 
+        updateUserLabel();
         updateUI();
     }
 
@@ -455,7 +593,7 @@
         updateUI(); await new Promise(r => setTimeout(r, 400)); 
         let cur = index;
         if (stones === 1) { 
-            cur = (cur + 1) % 14; board[cur]++; updateUI(); await new Promise(r => setTimeout(r, 400));
+            cur = (cur + 1) % 14; board[cur]++; updateUI(); animateLastStoneInPit(cur); triggerTreasurySparkle(cur); await new Promise(r => setTimeout(r, 400));
         } else { 
             board[index] = 1; stones--; updateUI(); await new Promise(r => setTimeout(r, 400));
             while (stones > 0) { 
@@ -464,7 +602,7 @@
                 if (!isPlayer1Turn && cur === 6) continue; 
                 board[cur]++; stones--; 
                 clickSound.currentTime = 0; clickSound.play().catch(()=>{}); 
-                updateUI(); await new Promise(r => setTimeout(r, 400));
+                updateUI(); animateLastStoneInPit(cur); triggerTreasurySparkle(cur); await new Promise(r => setTimeout(r, 400));
             } 
         } 
         checkRules(cur); isAnimating = false; await checkGameOver(); updateUI(); 
@@ -486,6 +624,7 @@
             } 
         } 
         isPlayer1Turn = !isPlayer1Turn;
+        playTurnDing();
     }
 
     function aiMove() { 
@@ -505,6 +644,7 @@
             let winnerText = "Berabere";
             if (board[6] > board[13]) winnerText = p1Name + " kazandı";
             else if (board[13] > board[6]) winnerText = p2Name + " kazandı";
+            const isDraw = winnerText.includes("Berabere");
             if (gameMode === "ONLINE" && currentRoomRef) {
                 try {
                     await currentRoomRef.update({
@@ -522,11 +662,22 @@
                 const docSnap = await userRef.get(); 
                 const yeniSkor = (docSnap.data()[f] || 0) + board[6]; 
                 await userRef.update({ [f]: yeniSkor });
-                await showResultBox(
-                    "Bitti! " + winnerText + " | Skor: " + yeniSkor,
-                    2200,
-                    winnerText.includes("Berabere") ? "draw" : "win"
-                );
+                currentUser[f] = yeniSkor;
+                playEndJingle(isDraw);
+                createFxBurst(isDraw ? "draw" : "win");
+                const choice = await showResultBox("Bitti! " + winnerText + " | Skor: " + yeniSkor, {
+                    type: isDraw ? "draw" : "win",
+                    withActions: true
+                });
+                if (choice === "replay" && gameMode === "AI") {
+                    board = [4, 4, 4, 4, 4, 4, 0, 4, 4, 4, 4, 4, 4, 0];
+                    isPlayer1Turn = true;
+                    isAnimating = false;
+                    gameFinished = false;
+                    updateUserLabel();
+                    updateUI();
+                    return;
+                }
                 await forceReset(); 
             } catch (e) { console.error(e); await forceReset(); } 
         } 
