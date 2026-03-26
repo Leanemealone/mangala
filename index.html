@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Mangala Online v14.7 - Görsel Güncelleme</title>
+    <title>Mangala Online v14.6 - Kesin Çözüm</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
@@ -14,32 +14,29 @@
         :root { --board-color: #8d6e63; --pit-color: #4e342e; --stone-color: #f5f5f5; --active-color: #ffd54f; }
         body { display: flex; flex-direction: column; align-items: center; background-color: #2c3e50; font-family: 'Segoe UI', sans-serif; color: white; margin: 0; padding: 5px; overflow: hidden; touch-action: none; }
         
-        /* VS EKRANI */
         #vs-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #0052d4, #4364f7, #6fb1fc); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 25000; animation: fadeIn 0.8s; }
         .vs-player { font-size: 3.5rem; color: #ffd54f; font-weight: 900; text-transform: uppercase; text-shadow: 4px 4px 0px #4e342e; margin: 10px; text-align: center; width: 90%; font-family: 'Arial Black', sans-serif; }
         #vs-custom-img { width: auto; height: 35vh; max-width: 80vw; object-fit: contain; margin: 20px 0; animation: bounceVs 1s infinite alternate; }
+        
         @keyframes bounceVs { from { transform: scale(1); } to { transform: scale(1.1); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .game-active, .game-active * { cursor: none !important; }
         #hand { position: fixed; width: 60px; height: 60px; background-image: url('https://raw.githubusercontent.com/Leanemealone/assets-images/refs/heads/main/handdd.png'); background-size: contain; background-repeat: no-repeat; z-index: 10001; pointer-events: none; display: none; transform: translate(-10px, -10px); }
+        
         #auth-overlay, #lobby-selection, #waiting-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10000; }
         .auth-card { background: #34495e; padding: 20px; border-radius: 20px; text-align: center; width: 85%; max-width: 320px; }
+        
         #online-count-box { margin: 8px 0 6px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255, 213, 79, 0.6); border-radius: 10px; padding: 8px 10px; font-size: 0.9rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
         select, input { width: 100%; height: 42px; padding: 0 10px; margin: 8px 0; border-radius: 10px; border: none; font-size: 1rem; box-sizing: border-box; }
 
         #game-ui { display: none; flex-direction: column; align-items: center; width: 100%; height: 100vh; justify-content: center; }
-        
-        /* FOTOĞRAFLI STATS BAR */
-        #stats-bar { display: flex; justify-content: space-between; align-items: center; width: 95%; max-width: 900px; margin-bottom: 10px; position: relative; }
-        .player-avatar-container { display: flex; flex-direction: column; align-items: center; transition: 0.3s; width: 120px; }
-        .player-avatar { width: 80px; height: 80px; border-radius: 50%; border: 4px solid #34495e; background: #eee; object-fit: cover; transition: 0.4s; }
-        .avatar-active { transform: scale(1.3); border-color: var(--active-color); box-shadow: 0 0 20px var(--active-color); }
-        .player-name-label { font-size: 0.8rem; font-weight: bold; margin-top: 5px; text-align: center; text-transform: uppercase; max-width: 100px; overflow: hidden; }
+        #stats-bar { display: flex; justify-content: space-around; width: 92%; background: #34495e; padding: 6px; border-radius: 20px; margin-bottom: 8px; font-size: 0.75rem; border: 1px solid #444; }
 
         #board { display: grid; grid-template-columns: repeat(8, 9.5vw); gap: 1.2vw; background: var(--board-color); padding: 20px 10px; border-radius: 15px; box-shadow: 0 15px 30px rgba(0,0,0,0.7); border: 6px solid #5d4037; position: relative; max-width: 98vw; }
         .pit { width: 9.5vw; height: 9.5vw; background: var(--pit-color); border-radius: 50%; display: flex; flex-wrap: wrap; justify-content: center; align-content: center; position: relative; box-shadow: inset 4px 4px 10px rgba(0,0,0,0.6); transition: 0.3s; }
         .treasury { grid-row: span 2; height: 21vw; border-radius: 30px; }
+        
         .active-pit { box-shadow: inset 2px 2px 8px rgba(0,0,0,0.5), 0 0 20px var(--active-color); border: 2px solid var(--active-color); transform: scale(1.03); }
         .stone { width: 1.5vw; height: 1.5vw; background: radial-gradient(circle at 2px 2px, #eee, #999); border-radius: 50%; margin: 1px; }
         .stone-count { position: absolute; font-size: 0.9rem; color: #ffd54f; font-weight: bold; width: 100%; text-align: center; left: 0; pointer-events: none; }
@@ -79,20 +76,8 @@
     <div id="waiting-screen" style="display:none;"><h3>🔄 Rakip Bekleniyor...</h3><button class="btn btn-reset" onclick="forceReset()">İptal Et</button></div>
    
     <div id="game-ui">
-        <div id="stats-bar">
-            <div class="player-avatar-container" id="p1-container">
-                <img src="https://img.icons8.com/color/96/user.png" class="player-avatar" id="p1-photo">
-                <div class="player-name-label" id="p1-label">SEN</div>
-            </div>
-            <div style="flex-grow:1; display:flex; flex-direction:column; align-items:center;">
-                <div id="turn-indicator" style="font-size:1.1rem; color:#ffd54f; font-weight:bold; margin-bottom:5px;">YÜKLENİYOR...</div>
-            </div>
-            <div class="player-avatar-container" id="p2-container">
-                <img src="https://img.icons8.com/color/96/bot.png" class="player-avatar" id="p2-photo">
-                <div class="player-name-label" id="p2-label">RAKİP</div>
-            </div>
-        </div>
-
+        <div id="stats-bar"><div id="user-label">Sen: ---</div><div id="opponent-label">Rakip: ---</div></div>
+        <div id="turn-indicator" style="font-size:1rem; margin-bottom:12px; color:#ffd54f; font-weight:bold;">Sıra Bekleniyor...</div>
         <div id="board">
             <div class="pit treasury" id="pit13"></div>
             <div class="pit" onclick="handlePitClick(12)" id="pit12"></div>
@@ -109,7 +94,7 @@
             <div class="pit" onclick="handlePitClick(4)" id="pit4"></div>
             <div class="pit" onclick="handlePitClick(5)" id="pit5"></div>
         </div>
-        <button class="btn btn-reset" style="margin-top:10px" onclick="forceReset()">Menüye Dön</button>
+        <button class="btn btn-reset" onclick="forceReset()">Menüye Dön</button>
     </div>
     <button id="fullscreen-helper" class="btn btn-green" onclick="enterFullscreen()">Tam Ekran</button>
 
@@ -119,7 +104,7 @@
     const db = firebase.firestore();
     const rtdb = firebase.database();
     const clickSound = new Audio('https://raw.githubusercontent.com/Leanemealone/assets-images/refs/heads/main/tas_sesi.mp3');
-    
+
     let board = [4, 4, 4, 4, 4, 4, 0, 4, 4, 4, 4, 4, 4, 0];
     let isPlayer1Turn = true;
     let currentUser = null;
@@ -147,7 +132,9 @@
         hand.style.display = "block";
         hand.style.left = x + 'px'; hand.style.top = y + 'px'; 
     }
-    window.addEventListener('mousemove', updateHandPos); window.addEventListener('touchstart', updateHandPos); window.addEventListener('touchmove', updateHandPos);
+    window.addEventListener('mousemove', updateHandPos); 
+    window.addEventListener('touchstart', updateHandPos); 
+    window.addEventListener('touchmove', updateHandPos);
 
     async function loadStudents() { 
         try { 
@@ -257,14 +244,9 @@
         isHandActive = true;
         document.getElementById('game-ui').style.display = 'flex'; 
         document.body.classList.add('game-active');
-        
         opponentName = (myRole === "p1" ? data.p2 : data.p1);
-        document.getElementById('p1-label').innerText = (gameMode === "ONLINE" && myRole === "p2") ? opponentName : currentUser.ad_soyad;
-        document.getElementById('p2-label').innerText = (gameMode === "ONLINE" && myRole === "p2") ? currentUser.ad_soyad : opponentName;
-        
-        // Eğer veritabanında 'foto_url' varsa buraya eklenir
-        // Örn: document.getElementById('p1-photo').src = studentsData[currentUser.id].foto_url;
-
+        document.getElementById('opponent-label').innerText = "Rakip: " + opponentName;
+        document.getElementById('user-label').innerText = "Sen: " + currentUser.ad_soyad;
         currentRoomRef.on('value', async snap => {
             const val = snap.val(); if(!val) return;
             if (val.lastPlayer !== "" && val.lastPlayer !== myRole && val.ts > lastProcessedMoveTs) { 
@@ -280,9 +262,8 @@
         document.getElementById('lobby-selection').style.display = 'none'; 
         document.getElementById('game-ui').style.display = 'flex'; 
         document.body.classList.add('game-active');
-        
-        document.getElementById('p1-label').innerText = currentUser.ad_soyad; 
-        document.getElementById('p2-label').innerText = opponentName; 
+        document.getElementById('opponent-label').innerText = "Rakip: " + opponentName; 
+        document.getElementById('user-label').innerText = "Sen: " + currentUser.ad_soyad; 
         updateUI();
     }
 
@@ -290,12 +271,7 @@
         const ind = document.getElementById('turn-indicator');
         const p1Name = (gameMode === "ONLINE" && myRole === "p2") ? opponentName : currentUser.ad_soyad;
         const p2Name = (gameMode === "ONLINE" && myRole === "p2") ? currentUser.ad_soyad : opponentName;
-        
         ind.innerText = isPlayer1Turn ? `Sıra: ${p1Name}` : `Sıra: ${p2Name}`;
-
-        // AVATAR BÜYÜTME EFEKTİ
-        document.getElementById('p1-photo').classList.toggle('avatar-active', isPlayer1Turn);
-        document.getElementById('p2-photo').classList.toggle('avatar-active', !isPlayer1Turn);
 
         for (let i = 0; i < 14; i++) {
             const p = document.getElementById('pit' + i);
@@ -320,6 +296,8 @@
     async function handlePitClick(i) { 
         if (isAnimating || board[i] === 0) return;
         if (gameMode === "ONLINE" && ((myRole === "p1" && !isPlayer1Turn) || (myRole === "p2" && isPlayer1Turn))) return;
+
+        // HAMLE SINIRLAMA KONTROLÜ 
         if (isPlayer1Turn && (i < 0 || i > 5)) return;
         if (!isPlayer1Turn && (i < 7 || i > 12)) return;
 
@@ -376,30 +354,38 @@
         if(m.length) handlePitClick(m[Math.floor(Math.random()*m.length)]);
     }
 
-    async function checkGameOver() { 
+   async function checkGameOver() { 
         if (board.slice(0, 6).every(v => v === 0) || board.slice(7, 13).every(v => v === 0)) { 
             isAnimating = true;
+            // Oyun bittiğinde taşları ilgili hazinelere topla 
             for (let i = 0; i < 6; i++) { board[6] += board[i]; board[i] = 0; } 
             for (let i = 7; i < 13; i++) { board[13] += board[i]; board[i] = 0; } 
-            updateUI();
-            
-            // KAZANAN TESPİTİ
-            let kazanan = "";
-            const p1Name = (gameMode === "ONLINE" && myRole === "p2") ? opponentName : currentUser.ad_soyad;
-            const p2Name = (gameMode === "ONLINE" && myRole === "p2") ? currentUser.ad_soyad : opponentName;
-            
-            if (board[6] > board[13]) kazanan = p1Name + " KAZANDI! 🏆";
-            else if (board[13] > board[6]) kazanan = p2Name + " KAZANDI! 🏆";
-            else kazanan = "BERABERE! 🤝";
+            updateUI(); [cite: 115]
 
-            const f = (gameMode === "AI") ? "skor_ai" : "skor_online"; 
+            // KAZANANI BELİRLEME MANTIĞI
+            let kazananMesaji = "";
+            const p1Name = (gameMode === "ONLINE" && myRole === "p2") ? opponentName : currentUser.ad_soyad; [cite: 86]
+            const p2Name = (gameMode === "ONLINE" && myRole === "p2") ? currentUser.ad_soyad : opponentName; [cite: 87]
+
+            if (board[6] > board[13]) {
+                kazananMesaji = p1Name + " KAZANDI! 🏆";
+            } else if (board[13] > board[6]) {
+                kazananMesaji = p2Name + " KAZANDI! 🏆";
+            } else {
+                kazananMesaji = "OYUN BERABERE BİTTİ! 🤝";
+            }
+
+            const f = (gameMode === "AI") ? "skor_ai" : "skor_online"; [cite: 116]
             try { 
-                const userRef = db.collection('ogrenciler').doc(currentUser.id);
-                const docSnap = await userRef.get(); 
-                const yeniSkor = (docSnap.data()[f] || 0) + board[6]; 
-                await userRef.update({ [f]: yeniSkor });
-                alert(kazanan + "\nSkorun: " + yeniSkor); forceReset(); 
-            } catch (e) { console.error(e); forceReset(); } 
+                const userRef = db.collection('ogrenciler').doc(currentUser.id); [cite: 116]
+                const docSnap = await userRef.get(); [cite: 117]
+                const yeniSkor = (docSnap.data()[f] || 0) + board[6]; [cite: 117]
+                await userRef.update({ [f]: yeniSkor }); [cite: 117]
+                
+                // ARTIK BURADA DİNAMİK MESAJ GÖRÜNECEK
+                alert(kazananMesaji + "\n\nKazanılan Puan: " + board[6]); [cite: 118]
+                forceReset(); [cite: 118]
+            } catch (e) { console.error(e); forceReset(); } [cite: 118]
         } 
     }
 </script>
