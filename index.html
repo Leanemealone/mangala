@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Mangala Online v14.6 - Kesin Çözüm</title>
+    <title>Mangala Online v14.7</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
@@ -297,7 +297,6 @@
         if (isAnimating || board[i] === 0) return;
         if (gameMode === "ONLINE" && ((myRole === "p1" && !isPlayer1Turn) || (myRole === "p2" && isPlayer1Turn))) return;
 
-        // HAMLE SINIRLAMA KONTROLÜ 
         if (isPlayer1Turn && (i < 0 || i > 5)) return;
         if (!isPlayer1Turn && (i < 7 || i > 12)) return;
 
@@ -357,15 +356,13 @@
     async function checkGameOver() { 
         if (board.slice(0, 6).every(v => v === 0) || board.slice(7, 13).every(v => v === 0)) { 
             isAnimating = true;
-            // Oyun bittiğinde taşları ilgili hazinelere topla 
             for (let i = 0; i < 6; i++) { board[6] += board[i]; board[i] = 0; } 
             for (let i = 7; i < 13; i++) { board[13] += board[i]; board[i] = 0; } 
-            updateUI(); [cite: 115]
+            updateUI(); 
 
-            // KAZANANI BELİRLEME MANTIĞI
             let kazananMesaji = "";
-            const p1Name = (gameMode === "ONLINE" && myRole === "p2") ? opponentName : currentUser.ad_soyad; [cite: 86]
-            const p2Name = (gameMode === "ONLINE" && myRole === "p2") ? currentUser.ad_soyad : opponentName; [cite: 87]
+            const p1Name = (gameMode === "ONLINE" && myRole === "p2") ? opponentName : currentUser.ad_soyad; 
+            const p2Name = (gameMode === "ONLINE" && myRole === "p2") ? currentUser.ad_soyad : opponentName; 
 
             if (board[6] > board[13]) {
                 kazananMesaji = p1Name + " KAZANDI! 🏆";
@@ -375,18 +372,17 @@
                 kazananMesaji = "OYUN BERABERE BİTTİ! 🤝";
             }
 
-            const f = (gameMode === "AI") ? "skor_ai" : "skor_online"; [cite: 116]
+            const f = (gameMode === "AI") ? "skor_ai" : "skor_online"; 
             try { 
-                const userRef = db.collection('ogrenciler').doc(currentUser.id); [cite: 116]
-                const docSnap = await userRef.get(); [cite: 117]
-                const yeniSkor = (docSnap.data()[f] || 0) + board[6]; [cite: 117]
-                await userRef.update({ [f]: yeniSkor }); [cite: 117]
+                const userRef = db.collection('ogrenciler').doc(currentUser.id); 
+                const docSnap = await userRef.get(); 
+                const yeniSkor = (docSnap.data()[f] || 0) + board[6]; 
+                await userRef.update({ [f]: yeniSkor }); 
                 
-                // ARTIK BURADA DİNAMİK MESAJ GÖRÜNECEK
-                alert(kazananMesaji + "\n\nKazanılan Puan: " + board[6]); [cite: 118]
-                forceReset(); [cite: 118]
-            } catch (e) { console.error(e); forceReset(); } [cite: 118]
-        } 
+                alert(kazananMesaji + "\n\nKazanılan Puan: " + board[6]); 
+                forceReset(); 
+            } catch (e) { console.error(e); forceReset(); } 
+        }  
     }
 </script>
 </body>
