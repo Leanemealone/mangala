@@ -360,13 +360,18 @@
             for (let i = 0; i < 6; i++) { board[6] += board[i]; board[i] = 0; } 
             for (let i = 7; i < 13; i++) { board[13] += board[i]; board[i] = 0; } 
             updateUI();
+            const p1Name = (gameMode === "ONLINE" && myRole === "p2") ? opponentName : currentUser.ad_soyad;
+            const p2Name = (gameMode === "ONLINE" && myRole === "p2") ? currentUser.ad_soyad : opponentName;
+            let winnerText = "Berabere";
+            if (board[6] > board[13]) winnerText = p1Name + " kazandı";
+            else if (board[13] > board[6]) winnerText = p2Name + " kazandı";
             const f = (gameMode === "AI") ? "skor_ai" : "skor_online"; 
             try { 
                 const userRef = db.collection('ogrenciler').doc(currentUser.id);
                 const docSnap = await userRef.get(); 
                 const yeniSkor = (docSnap.data()[f] || 0) + board[6]; 
                 await userRef.update({ [f]: yeniSkor });
-                alert("Bitti! Skor: " + yeniSkor); forceReset(); 
+                alert("Bitti! " + winnerText + " | Skor: " + yeniSkor); forceReset(); 
             } catch (e) { console.error(e); forceReset(); } 
         } 
     }
