@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Mangala Online v14.6 - Kesin Çözüm</title>
+    <title>Mangala Online v14.6</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
@@ -190,32 +190,101 @@
         document.getElementById('lobby-selection').style.display = 'none';
         document.getElementById('waiting-screen').style.display = 'flex';
         const lobbyRef = rtdb.ref('lobby');
-        const lobbySnap = await lobbyRef.get();
-        
-        if (!lobbySnap.val()) {
-            const newRoomRef = rtdb.ref('rooms').push();
-            myRole = "p1"; currentRoomRef = newRoomRef;
-            await newRoomRef.set({ p1: currentUser.ad_soyad, p2: "", board: board, turn: "p1", lastMove: -1, lastPlayer: "", ts: 0 });
-            await lobbyRef.set(newRoomRef.key);
-            currentRoomRef.child('p1').onDisconnect().set("");
-            newRoomRef.on('value', snap => {
-                const v = snap.val();
-                if (v && v.p2 !== "" && !isHandActive) showVSScreen(v);
-                if (v && isHandActive && v.p2 === "") handleOpponentLeft();
-            });
-        } else {
-            const roomId = lobbySnap.val();
-            myRole = "p2"; currentRoomRef = rtdb.ref('rooms/' + roomId);
-            await currentRoomRef.update({ p2: currentUser.ad_soyad });
-            await lobbyRef.remove();
-            currentRoomRef.child('p2').onDisconnect().set("");
-            const snap = await currentRoomRef.get();
-            showVSScreen(snap.val());
-            currentRoomRef.on('value', snap => {
-                const v = snap.val();
-                if (v && isHandActive && v.p1 === "") handleOpponentLeft();
-            });
+        const maxRetries = 25;
+        const retryDelayMs = 250;
+
+        for (let attempt = 0; attempt < maxRetries; attempt++) {
+            const lobbySnap = await lobbyRef.get();
+            const lobbyVal = lobbySnap.val();
+
+            if (!lobbyVal) {
+                const lock = { type: "lock", owner: sessionId, ts: Date.now() };
+                const lockResult = await lobbyRef.transaction(cur => (cur === null ? lock : cur));
+                if (!lockResult.committed) {
+                    await new Promise(r => setTimeout(r, retryDelayMs));
+                    continue;
+                }
+
+                try {
+                    const newRoomRef = rtdb.ref('rooms').push();
+                    myRole = "p1";
+                    currentRoomRef = newRoomRef;
+                    await newRoomRef.set({
+                        p1: currentUser.ad_soyad,
+                        p2: "",
+                        board: board,
+                        turn: "p1",
+                        lastMove: -1,
+                        lastPlayer: "",
+                        ts: 0
+                    });
+                    await lobbyRef.set(newRoomRef.key);
+                    currentRoomRef.child('p1').onDisconnect().set("");
+                    newRoomRef.on('value', snap => {
+                        const v = snap.val();
+                        if (v && v.p2 !== "" && !isHandActive) showVSScreen(v);
+                        if (v && isHandActive && v.p2 === "") handleOpponentLeft();
+                    });
+                    return;
+                } catch (e) {
+                    console.error(e);
+                    await lobbyRef.transaction(cur => (
+                        cur && cur.type === "lock" && cur.owner === sessionId ? null : cur
+                    ));
+                    throw e;
+                }
+            }
+
+            if (typeof lobbyVal === "string") {
+                const roomId = lobbyVal;
+                const roomRef = rtdb.ref('rooms/' + roomId);
+                const joinResult = await roomRef.transaction(room => {
+                    if (!room) return room;
+                    if (!room.p1 || room.p1 === "") return room;
+                    if (room.p2 && room.p2 !== "") return;
+                    room.p2 = currentUser.ad_soyad;
+                    return room;
+                });
+
+                const joinedRoom = joinResult.snapshot && joinResult.snapshot.val ? joinResult.snapshot.val() : null;
+                const joinedOk = !!(joinResult.committed && joinedRoom && joinedRoom.p2 === currentUser.ad_soyad);
+                if (joinedOk) {
+                    myRole = "p2";
+                    currentRoomRef = roomRef;
+                    await lobbyRef.transaction(cur => (cur === roomId ? null : cur));
+                    currentRoomRef.child('p2').onDisconnect().set("");
+                    showVSScreen(joinedRoom);
+                    currentRoomRef.on('value', snap => {
+                        const v = snap.val();
+                        if (v && isHandActive && v.p1 === "") handleOpponentLeft();
+                    });
+                    return;
+                }
+
+                await lobbyRef.transaction(cur => (cur === roomId ? null : cur));
+                await new Promise(r => setTimeout(r, retryDelayMs));
+                continue;
+            }
+
+            if (lobbyVal && lobbyVal.type === "lock") {
+                const lockAge = Date.now() - (lobbyVal.ts || 0);
+                if (lockAge > 8000) {
+                    await lobbyRef.transaction(cur => {
+                        if (!cur || cur.type !== "lock") return cur;
+                        const curAge = Date.now() - (cur.ts || 0);
+                        if (curAge > 8000) return { type: "lock", owner: sessionId, ts: Date.now() };
+                        return cur;
+                    });
+                }
+                await new Promise(r => setTimeout(r, retryDelayMs));
+                continue;
+            }
+
+            await new Promise(r => setTimeout(r, retryDelayMs));
         }
+
+        alert("Eşleştirme şu anda yapılamadı. Lütfen tekrar deneyin.");
+        forceReset();
     }
 
     async function handleOpponentLeft() {
