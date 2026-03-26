@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Mangala Online v15.0</title>
+    <title>Mangala Online v15.1</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
@@ -55,8 +55,26 @@
         
         .active-pit { border: 2px solid #fff4a3; transform: scale(1.05); animation: activeGlow 1.1s ease-in-out infinite; }
         .stone { width: 1.5vw; height: 1.5vw; background: radial-gradient(circle at 2px 2px, #eee, #999); border-radius: 50%; margin: 1px; }
-        .stone-count { position: absolute; font-size: 0.9rem; color: #ffd54f; font-weight: bold; width: 100%; text-align: center; left: 0; pointer-events: none; }
-        .count-top { top: -22px; } .count-bottom { bottom: -22px; } .count-treasury { bottom: -18px; }
+        .stone-count {
+            position: absolute;
+            font-size: 0.95rem;
+            color: #ffd54f;
+            font-weight: 900;
+            letter-spacing: 0.2px;
+            text-align: center;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+            min-width: 18px;
+            padding: 0 6px;
+            border-radius: 999px;
+            background: rgba(40, 24, 16, 0.36);
+            text-shadow: 0 1px 0 rgba(0, 0, 0, 0.65), 0 0 7px rgba(0, 0, 0, 0.55);
+            -webkit-text-stroke: 0.35px rgba(45, 28, 18, 0.9);
+        }
+        .count-top { top: -24px; }
+        .count-bottom { bottom: -24px; }
+        .count-treasury { bottom: -20px; }
 
         .btn { padding: 10px 20px; font-size: 1.02rem; font-weight: bold; color: white; border: none; border-radius: 12px; cursor: pointer; transition: transform 0.15s ease, filter 0.15s ease; }
         .btn:hover { transform: translateY(-1px) scale(1.02); filter: brightness(1.06); }
