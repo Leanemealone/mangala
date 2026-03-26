@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Mangala Online v14.6</title>
+    <title>Mangala Online v14.7</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
@@ -17,6 +17,10 @@
         #vs-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #0052d4, #4364f7, #6fb1fc); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 25000; animation: fadeIn 0.8s; }
         .vs-player { font-size: 3.5rem; color: #ffd54f; font-weight: 900; text-transform: uppercase; text-shadow: 4px 4px 0px #4e342e; margin: 10px; text-align: center; width: 90%; font-family: 'Arial Black', sans-serif; }
         #vs-custom-img { width: auto; height: 35vh; max-width: 80vw; object-fit: contain; margin: 20px 0; animation: bounceVs 1s infinite alternate; }
+        #result-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: none; justify-content: center; align-items: center; z-index: 32000; padding: 16px; box-sizing: border-box; }
+        #result-card { width: min(560px, 92vw); background: linear-gradient(160deg, #34495e, #2c3e50); border: 2px solid #ffd54f; border-radius: 18px; box-shadow: 0 12px 28px rgba(0,0,0,0.45); text-align: center; padding: 22px 16px; }
+        #result-icon { font-size: 2.1rem; margin-bottom: 10px; }
+        #result-text { font-size: 1.15rem; line-height: 1.4; color: #fff; font-weight: 700; }
         
         @keyframes bounceVs { from { transform: scale(1); } to { transform: scale(1.1); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -51,6 +55,7 @@
 </head>
 <body>
     <div id="hand"></div>
+    <div id="result-overlay"><div id="result-card"><div id="result-icon">ℹ️</div><div id="result-text"></div></div></div>
     <div id="vs-screen"><div id="p1-vs" class="vs-player"></div><img id="vs-custom-img" src="https://raw.githubusercontent.com/Leanemealone/mangala/refs/heads/main/vs.png" alt="VS"><div id="p2-vs" class="vs-player"></div></div>
     
     <div id="auth-overlay">
@@ -136,6 +141,33 @@
     window.addEventListener('mousemove', updateHandPos); 
     window.addEventListener('touchstart', updateHandPos); 
     window.addEventListener('touchmove', updateHandPos);
+
+    function getResultIcon(message, type = "info") {
+        if (type === "win") return "🏆";
+        if (type === "draw") return "🤝";
+        if (type === "leave") return "🚪";
+        if (type === "error") return "⚠️";
+        if (message.includes("Berabere")) return "🤝";
+        if (message.includes("kazandı")) return "🏆";
+        if (message.includes("çıktı")) return "🚪";
+        return "ℹ️";
+    }
+
+    function showResultBox(message, autoCloseMs = 2200, type = "info") {
+        const overlay = document.getElementById('result-overlay');
+        const icon = document.getElementById('result-icon');
+        const text = document.getElementById('result-text');
+        if (!overlay || !text || !icon) return Promise.resolve();
+        icon.innerText = getResultIcon(message, type);
+        text.innerText = message;
+        overlay.style.display = 'flex';
+        return new Promise(resolve => {
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                resolve();
+            }, autoCloseMs);
+        });
+    }
 
     async function loadStudents() { 
         try { 
@@ -304,22 +336,22 @@
             await new Promise(r => setTimeout(r, retryDelayMs));
         }
 
-        alert("Eşleştirme şu anda yapılamadı. Lütfen tekrar deneyin.");
-        forceReset();
+        await showResultBox("Eşleştirme şu anda yapılamadı. Lütfen tekrar deneyin.", 2200, "error");
+        await forceReset();
     }
 
     async function handleOpponentLeft() {
         if (!isHandActive || gameFinished) return;
         gameFinished = true;
         currentRoomRef.off(); isAnimating = true;
-        alert("Rakip oyundan çıktı! Skorun kaydediliyor ve menüye dönülüyor.");
+        await showResultBox("Rakip oyundan çıktı! Skorun kaydediliyor ve menüye dönülüyor.", 2200, "leave");
         try {
             const userRef = db.collection('ogrenciler').doc(currentUser.id);
             const docSnap = await userRef.get();
             const yeniSkor = (docSnap.data()["skor_online"] || 0) + board[6];
             await userRef.update({ ["skor_online"]: yeniSkor });
         } catch (e) { console.error(e); }
-        forceReset();
+        await forceReset();
     }
 
     function showVSScreen(data) {
@@ -347,8 +379,12 @@
                     board = [...val.board];
                     isPlayer1Turn = (val.turn === "p1");
                     updateUI();
-                    if (val.winnerText) alert("Bitti! " + val.winnerText);
-                    forceReset();
+                    if (val.winnerText) await showResultBox(
+                        "Bitti! " + val.winnerText,
+                        2200,
+                        val.winnerText.includes("Berabere") ? "draw" : "win"
+                    );
+                    await forceReset();
                 }
                 return;
             }
@@ -486,7 +522,12 @@
                 const docSnap = await userRef.get(); 
                 const yeniSkor = (docSnap.data()[f] || 0) + board[6]; 
                 await userRef.update({ [f]: yeniSkor });
-                alert("Bitti! " + winnerText + " | Skor: " + yeniSkor); await forceReset(); 
+                await showResultBox(
+                    "Bitti! " + winnerText + " | Skor: " + yeniSkor,
+                    2200,
+                    winnerText.includes("Berabere") ? "draw" : "win"
+                );
+                await forceReset(); 
             } catch (e) { console.error(e); await forceReset(); } 
         } 
     }
