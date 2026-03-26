@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Mangala Online v15.2</title>
+    <title>Mangala Online v14.6</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
@@ -79,7 +79,55 @@
         .btn { padding: 10px 20px; font-size: 1.02rem; font-weight: bold; color: white; border: none; border-radius: 12px; cursor: pointer; transition: transform 0.15s ease, filter 0.15s ease; }
         .btn:hover { transform: translateY(-1px) scale(1.02); filter: brightness(1.06); }
         .btn-green { background: linear-gradient(140deg, #32c96f, #22a85b); } .btn-reset { background: linear-gradient(140deg, #ff6a5f, #e74c3c); z-index: 30000; }
-        #fullscreen-helper { position: fixed; right: 10px; bottom: 10px; z-index: 31000; }
+        #lobby-selection .btn-green {
+            width: min(360px, 86vw);
+            margin: 8px 0;
+            padding: 14px 20px;
+            border-radius: 16px;
+            font-family: 'Baloo 2', 'Segoe UI', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 800;
+            letter-spacing: 0.4px;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+            background: linear-gradient(145deg, #39d679 0%, #27b865 55%, #1f9f56 100%);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+        }
+        #lobby-selection .btn-green:hover {
+            transform: translateY(-2px) scale(1.025);
+            filter: brightness(1.07);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.32), 0 0 16px rgba(120, 255, 175, 0.38);
+        }
+        #lobby-selection .btn-green:active {
+            transform: translateY(0) scale(0.995);
+            filter: brightness(0.98);
+        }
+        #fullscreen-helper {
+            position: fixed;
+            right: 12px;
+            top: 12px;
+            bottom: auto;
+            z-index: 31000;
+            padding: 12px 18px;
+            border-radius: 14px;
+            font-family: 'Baloo 2', 'Segoe UI', sans-serif;
+            font-size: 1.02rem;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+            background: linear-gradient(145deg, #39d679 0%, #27b865 55%, #1f9f56 100%);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+        }
+        #fullscreen-helper:hover {
+            transform: translateY(-2px) scale(1.02);
+            filter: brightness(1.07);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.32), 0 0 16px rgba(120, 255, 175, 0.38);
+        }
+        #fullscreen-helper:active {
+            transform: translateY(0) scale(0.995);
+            filter: brightness(0.98);
+        }
         #teacher-mini-panel { position: fixed; left: 10px; bottom: 10px; z-index: 30950; width: min(320px, 86vw); background: rgba(34, 50, 66, 0.92); border: 1px solid rgba(255,255,255,0.22); border-radius: 14px; padding: 10px; box-shadow: 0 8px 18px rgba(0,0,0,0.35); font-size: 0.82rem; }
         #teacher-mini-title { font-size: 0.92rem; font-weight: 800; color: #ffe082; margin-bottom: 5px; }
         .teacher-mini-row { display: flex; justify-content: space-between; margin: 2px 0; }
@@ -163,11 +211,9 @@
     </div>
     <button id="fullscreen-helper" class="btn btn-green" onclick="enterFullscreen()">Tam Ekran</button>
     <div id="teacher-mini-panel">
-        <div id="teacher-mini-title">Sinif Canli Durum</div>
+        <div id="teacher-mini-title">Sınıf Canlı Durum</div>
         <div class="teacher-mini-row"><span>Online:</span><strong id="tm-online">0</strong></div>
-        <div class="teacher-mini-row"><span>Macta:</span><strong id="tm-playing">0</strong></div>
-        <div class="teacher-mini-row"><span>Biten Mac:</span><strong id="tm-finished">0</strong></div>
-        <div id="teacher-online-names">Oyuncular: -</div>
+        <div id="teacher-online-names">Çevrimiçi Oyuncular: -</div>
     </div>
 
 <script>
@@ -256,20 +302,20 @@
     function buildMatchSummary(winnerText) {
         if (!matchStats) return "";
         const fastest = matchStats.fastest.ms === Number.POSITIVE_INFINITY
-            ? "En hizli hamle: -"
-            : "En hizli hamle: " + matchStats.fastest.player + " (" + (matchStats.fastest.ms / 1000).toFixed(1) + " sn)";
+            ? "En hızlı hamle: -"
+            : "En hızlı hamle: " + matchStats.fastest.player + " (" + (matchStats.fastest.ms / 1000).toFixed(1) + " sn)";
         const bestGain = matchStats.bestGain.stones > 0
-            ? "En cok tas: " + matchStats.bestGain.player + " (+" + matchStats.bestGain.stones + ")"
-            : "En cok tas: -";
+            ? "En çok taş: " + matchStats.bestGain.player + " (+" + matchStats.bestGain.stones + ")"
+            : "En çok taş: -";
         let starName = "";
         if (winnerText && winnerText.includes("kazandı")) {
             starName = winnerText.replace(" kazandı", "");
         } else if (matchStats.fastest.player) {
             starName = matchStats.fastest.player;
         } else {
-            starName = currentUser ? currentUser.ad_soyad : "Bugunun Oyuncusu";
+            starName = currentUser ? currentUser.ad_soyad : "Bugünün Oyuncusu";
         }
-        return fastest + "\n" + bestGain + "\nBugunun yildizi: " + starName;
+        return fastest + "\n" + bestGain + "\nBugünün yıldızı: " + starName;
     }
 
     function updateTeacherPanelFromPresence(presenceData) {
@@ -281,7 +327,13 @@
         const onlineEl = document.getElementById('tm-online');
         const namesEl = document.getElementById('teacher-online-names');
         if (onlineEl) onlineEl.innerText = String(online.length);
-        if (namesEl) namesEl.innerText = "Oyuncular: " + (names.length ? names.join(", ") : "-");
+        if (namesEl) namesEl.innerText = "Çevrimiçi Oyuncular: " + (names.length ? names.join(", ") : "-");
+    }
+
+    function setTeacherPanelVisible(visible) {
+        const panel = document.getElementById('teacher-mini-panel');
+        if (!panel) return;
+        panel.style.display = visible ? 'block' : 'none';
     }
 
     function showOnboardingIfNeeded() {
@@ -295,15 +347,15 @@
         const skipBtn = document.getElementById('onboarding-skip-btn');
         if (!overlay || !stepEl || !textEl || !nextBtn || !skipBtn) return;
         const steps = [
-            "Kendi tarafindaki dolu kuyulardan birine dokunarak hamle yap.",
-            "Her hamlede taslar saga dogru dagilir. Hazinene gelen taslar puandir.",
-            "Oyun bitince sonucu gor, istersen tekrar oyna veya menuye don."
+            "Kendi tarafındaki dolu kuyulardan birine dokunarak hamle yap.",
+            "Her hamlede taşlar sağa doğru dağılır. Hazinene gelen taşlar puandır.",
+            "Oyun bitince sonucu gör, istersen tekrar oyna veya menüye dön."
         ];
         let idx = 0;
         const render = () => {
-            stepEl.innerText = "Adim " + (idx + 1) + "/" + steps.length;
+            stepEl.innerText = "Adım " + (idx + 1) + "/" + steps.length;
             textEl.innerText = steps[idx];
-            nextBtn.innerText = idx === steps.length - 1 ? "Basla" : "Devam";
+            nextBtn.innerText = idx === steps.length - 1 ? "Başla" : "Devam";
         };
         const close = () => {
             overlay.style.display = 'none';
@@ -321,9 +373,9 @@
     }
 
     function getBadgeLabel(totalScore) {
-        if (totalScore >= 800) return "Sampiyon";
+        if (totalScore >= 800) return "Şampiyon";
         if (totalScore >= 350) return "Usta";
-        return "Baslangic";
+        return "Başlangıç";
     }
 
     function updateUserLabel() {
@@ -484,20 +536,6 @@
         if (el) el.innerText = String(count);
         updateTeacherPanelFromPresence(val);
     });
-    rtdb.ref('rooms').on('value', snap => {
-        const rooms = snap.exists() ? Object.values(snap.val()) : [];
-        let playing = 0;
-        let finished = 0;
-        rooms.forEach(r => {
-            if (!r || !r.p1 || !r.p2) return;
-            if (r.gameOver) finished++;
-            else playing++;
-        });
-        const playingEl = document.getElementById('tm-playing');
-        const finishedEl = document.getElementById('tm-finished');
-        if (playingEl) playingEl.innerText = String(playing);
-        if (finishedEl) finishedEl.innerText = String(finished);
-    });
 
     function showStudentScores() { 
         const id = document.getElementById('student-list').value; 
@@ -513,7 +551,28 @@
         const id = document.getElementById('student-list').value; 
         const pass = document.getElementById('password').value;
         if (!id || studentsData[id].sifre !== pass) return alert("Hatalı!"); 
+
+        // Aynı hesabın aynı anda ikinci cihazda açılmasını engelle.
+        try {
+            const sameUserSessionsSnap = await rtdb
+                .ref('presence_sessions')
+                .orderByChild('userId')
+                .equalTo(id)
+                .get();
+            if (sameUserSessionsSnap.exists()) {
+                const sessions = sameUserSessionsSnap.val() || {};
+                const hasOtherActiveSession = Object.keys(sessions).some(k => k !== sessionId);
+                if (hasOtherActiveSession) {
+                    await showResultBox("Bu hesap başka bir cihazda açık görünüyor.\nLütfen önce diğer cihazdan çıkış yap.", { type: "error", autoCloseMs: 2600 });
+                    return;
+                }
+            }
+        } catch (e) {
+            console.error(e);
+        }
+
         currentUser = { id, ...studentsData[id] }; 
+        setTeacherPanelVisible(true);
         updatePresenceState("lobby");
         document.getElementById('auth-overlay').style.display = 'none'; 
         document.getElementById('lobby-selection').style.display = 'flex';
@@ -546,6 +605,7 @@
         const lobby = document.getElementById('lobby-selection');
         if (lobby) lobby.style.display = 'flex';
         document.body.classList.remove('game-active');
+        setTeacherPanelVisible(true);
         updateUI();
         updateUserLabel();
         updatePresenceState("lobby");
@@ -680,7 +740,7 @@
             await new Promise(r => setTimeout(r, retryDelayMs));
         }
 
-        await showResultBox("Eslestirme su an yapilamadi. Lutfen tekrar dene.", { type: "error", autoCloseMs: 2200 });
+        await showResultBox("Eşleştirme şu an yapılamadı. Lütfen tekrar dene.", { type: "error", autoCloseMs: 2200 });
         await forceReset();
     }
 
@@ -688,7 +748,7 @@
         if (!isHandActive || gameFinished) return;
         gameFinished = true;
         currentRoomRef.off(); isAnimating = true;
-        await showResultBox("Rakip oyundan cikti. Skor kaydediliyor.", { type: "leave", autoCloseMs: 2200 });
+        await showResultBox("Rakip oyundan çıktı. Skor kaydediliyor.", { type: "leave", autoCloseMs: 2200 });
         try {
             const userRef = db.collection('ogrenciler').doc(currentUser.id);
             const docSnap = await userRef.get();
@@ -710,6 +770,7 @@
 
     function setupUI(data) {
         isHandActive = true;
+        setTeacherPanelVisible(false);
         updatePresenceState("in_match");
         if (!matchStats) resetMatchStats();
         document.getElementById('game-ui').style.display = 'flex'; 
@@ -759,6 +820,7 @@
 
     function startGame(mode) { 
         gameMode = mode; isHandActive = true;
+        setTeacherPanelVisible(false);
         resetMatchStats();
         updatePresenceState(mode === "AI" ? "ai_match" : "in_match");
         opponentName = (mode === "AI" ? "Bilgisayar" : "Rakip"); 
