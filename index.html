@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Mangala Online v15.4</title>
+    <title>Mangala Online v15.5</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
@@ -331,8 +331,18 @@
     </div>
 
 <script>
+(function () {
+    'use strict';
     const firebaseConfig = { apiKey: "AIzaSyDcsk1VzI78PnMYeGvvY9CoLoiLxXl-4VQ", projectId: "mangala-a967f", databaseURL: "https://mangala-a967f-default-rtdb.europe-west1.firebasedatabase.app", appId: "1:501041787727:web:f6a56b97c4415397078b3a" };
-    firebase.initializeApp(firebaseConfig);
+    try {
+        if (typeof firebase !== 'undefined' && firebase.initializeApp) {
+            if (!firebase.apps || firebase.apps.length === 0) {
+                firebase.initializeApp(firebaseConfig);
+            }
+        }
+    } catch (e) {
+        console.warn('Firebase init:', e);
+    }
     const db = firebase.firestore();
     const rtdb = firebase.database();
     const clickSound = new Audio('https://raw.githubusercontent.com/Leanemealone/assets-images/refs/heads/main/tas_sesi.mp3');
@@ -356,7 +366,31 @@
     let currentPresenceState = "auth";
     let studentsData = {};
     const sessionId = "sess_" + Math.random().toString(36).slice(2) + Date.now();
-    const audioCtx = window.AudioContext ? new AudioContext() : null;
+    let audioCtxInstance = null;
+    function unlockWebAudio() {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        if (!audioCtxInstance) {
+            audioCtxInstance = new AC();
+        } else if (audioCtxInstance.state === 'suspended') {
+            audioCtxInstance.resume().catch(function () {});
+        }
+    }
+    function getAudioContext() {
+        if (!audioCtxInstance) return null;
+        if (audioCtxInstance.state === 'suspended') {
+            audioCtxInstance.resume().catch(function () {});
+        }
+        return audioCtxInstance;
+    }
+    document.addEventListener('pointerdown', function unlockAudioOnce() {
+        unlockWebAudio();
+        document.removeEventListener('pointerdown', unlockAudioOnce, true);
+    }, true);
+    document.addEventListener('touchstart', function unlockAudioTouch() {
+        unlockWebAudio();
+        document.removeEventListener('touchstart', unlockAudioTouch, true);
+    }, true);
     const PRESENCE_TTL_MS = 45000;
     const PRESENCE_HEARTBEAT_MS = 15000;
 
@@ -503,12 +537,13 @@
     }
 
     function playTone(freq, durationMs, type = "sine", gain = 0.04) {
-        if (!audioCtx) return;
-        const osc = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
         osc.type = type; osc.frequency.value = freq;
         g.gain.value = gain;
-        osc.connect(g); g.connect(audioCtx.destination);
+        osc.connect(g); g.connect(ctx.destination);
         osc.start();
         setTimeout(() => osc.stop(), durationMs);
     }
@@ -714,6 +749,7 @@
         }
 
         currentUser = { id, ...studentsData[id] }; 
+        unlockWebAudio();
         setTeacherPanelVisible(true);
         updatePresenceState("lobby");
         document.getElementById('auth-overlay').style.display = 'none'; 
@@ -1001,6 +1037,7 @@
     }
 
     async function handlePitClick(i) { 
+        unlockWebAudio();
         if (isAnimating || board[i] === 0) return;
         if (gameMode === "ONLINE" && ((myRole === "p1" && !isPlayer1Turn) || (myRole === "p2" && isPlayer1Turn))) return;
 
@@ -1123,6 +1160,15 @@
             } catch (e) { console.error(e); await forceReset(); } 
         } 
     }
+
+    window.handleLogin = handleLogin;
+    window.startGame = startGame;
+    window.startOnlineMode = startOnlineMode;
+    window.forceReset = forceReset;
+    window.handlePitClick = handlePitClick;
+    window.enterFullscreen = enterFullscreen;
+    window.showStudentScores = showStudentScores;
+})();
 </script>
 </body>
 </html>
